@@ -45,7 +45,7 @@ export default defineConfig({
     {
       name: 'my-app',
       callback: () => {
-        // 要执行的会调函数
+        // 准备工作完成后执行
       }
     }
   ],
@@ -66,6 +66,8 @@ npx lvy dev
 
 - 装载
 
+> src/index.ts
+
 ```ts
 import { readFileSync } from 'fs'
 // 得到该文件的绝对路径，类型 string
@@ -74,6 +76,8 @@ const data = readFileSync(img_logo, 'utf-8')
 ```
 
 - 别名
+
+> src/index.ts
 
 ```ts
 import { readFileSync } from 'fs'
