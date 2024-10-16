@@ -1,15 +1,10 @@
 # 依赖
 node_modules
-
-alemon.config.yaml
-alemon.config.json
-
 *.lock
-
 data
-
 lib
-
 *.log.ts
-
+log
 logs
+*.log
+*.logs

@@ -31,9 +31,8 @@ export const load = async (
     return defaultLoad(url, context)
   }
   const code = await ESBuild(url.replace(reg, ''))
-  return {
+  return defaultLoad(url, {
     format: 'module',
-    source: code,
-    shortCircuit: true
-  }
+    source: code
+  })
 }

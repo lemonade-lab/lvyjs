@@ -1,6 +1,6 @@
 # LVY
 
-长春藤，一款为 node 构建设计的开发工具。
+一款为 node 构建设计的开发工具。
 
 ```sh
 npm install lvyjs -D
@@ -50,7 +50,6 @@ export default defineConfig({
 })
 ```
 
-
 ```sh
 npx lvy dev
 ```
@@ -75,7 +74,7 @@ const data = readFileSync(img_logo, 'utf-8')
 
 - 打包
 
-> 对src目录打包并输出到lib目录
+> 对 src 目录打包并输出到 lib 目录
 
 ```sh
 npx lvy build

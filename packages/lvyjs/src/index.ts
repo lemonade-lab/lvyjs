@@ -5,23 +5,24 @@ import { initConfig } from './store.js'
  * @param input
  */
 const onDev = async () => {
-  const apps = []
   // 修改config
   for (const plugin of global.lvyConfig.plugins) {
     if (plugin?.config) {
       const cfg = await plugin.config(global.lvyConfig)
-      global.lvyConfig = {
-        ...global.lvyConfig,
-        ...cfg
+      for (const key in cfg) {
+        // 不能覆盖plugins
+        if (cfg[key] != 'plugins') {
+          // 覆盖
+          global.lvyConfig[key] = cfg[key]
+        }
       }
     }
-    apps.push(plugin)
   }
   // 执行loader
   await import('./loader/main.js')
   // 执行callback
-  for (const app of apps) {
-    if (app?.callback) await app.callback()
+  for (const plugin of global.lvyConfig.plugins) {
+    if (plugin?.callback) await plugin.callback()
   }
 }
 

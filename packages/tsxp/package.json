@@ -39,9 +39,9 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
-  "bugs": "https://github.com/ningmengchongshui/alemonjs/issues",
+  "bugs": "https://github.com/lemonade-lab/lvyjs/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ningmengchongshui/alemonjs.git"
+    "url": "https://github.com/lemonade-lab/lvyjs.git"
   }
 }

@@ -149,7 +149,7 @@ export const esBuildAsstesFule = (): Plugin => {
  */
 const handleCSS = (fileUrl: string) => {
   const hash = getHash(fileUrl)
-  const outputDir = join(process.cwd(), 'node_modules', 'alemonjs', 'assets', `${hash}.css`)
+  const outputDir = join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${hash}.css`)
   if (!chache[fileUrl]) {
     startCssPost(fileUrl, outputDir)
     chache[fileUrl] = true
