@@ -1,13 +1,14 @@
 # LVY
 
-长春藤。 一款为 node 构建的开发工具
+长春藤，一款为 node 构建设计的开发工具。
 
 ```sh
 npm install lvyjs -D
 ```
 
+- lvy.config.ts
+
 ```ts
-// lvy.config.ts
 import { defineConfig } from 'lvyjs'
 import { alias, files } from 'lvyjs/plugins'
 import { fileURLToPath } from 'url'

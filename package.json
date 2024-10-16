@@ -1,7 +1,7 @@
 {
-  "name": "@alemonjs/core",
-  "version": "2.0.0",
-  "description": "alemonjs",
+  "name": "lvy",
+  "version": "1.0.0",
+  "description": "一款为 node 构建设计的开发工具",
   "author": "lemonade",
   "private": true,
   "license": "MIT",
@@ -14,17 +14,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@alemonjs/discord": "file:./packages/discord",
-    "@alemonjs/kook": "file:./packages/kook",
-    "@alemonjs/onebot": "file:./packages/onebot",
-    "@alemonjs/qq": "file:./packages/qq",
-    "@alemonjs/qq-group-bot": "file:./packages/qq-group-bot",
-    "@alemonjs/qq-guild-bot": "file:./packages/qq-guild-bot",
-    "@alemonjs/readline": "file:./packages/readline",
-    "@alemonjs/telegram": "file:./packages/telegram",
-    "alemonjs": "file:./packages/alemonjs",
-    "chat-space": "file:./packages/chat-space",
-    "create-alemonjs": "file:./packages/create-alemonjs",
+    "lvyjs": "file:./packages/lvyjs",
     "jsxp": "file:./packages/jsxp"
   },
   "devDependencies": {
