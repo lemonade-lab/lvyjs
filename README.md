@@ -1,6 +1,16 @@
 # LVY
 
-一款为 node 构建设计的开发工具。
+基于 tsx、esbuld、rollup 所构建的，为 nodejs 应用设计的打包工具
+
+| Project | Status                | Description |
+| ------- | --------------------- | ----------- |
+| [lvyjs] | [![lvyjs-s]][lvyjs-p] | 打包工具    |
+
+[lvyjs]: https://github.com/lemonade-lab/alemonjs/tree/main/packages/lvyjs
+[lvyjs-s]: https://img.shields.io/npm/v/lvyjs.svg
+[lvyjs-p]: https://www.npmjs.com/package/lvyjs
+
+- use
 
 ```sh
 npm install lvyjs -D
