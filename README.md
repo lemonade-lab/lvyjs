@@ -6,6 +6,21 @@
 npm install lvyjs -D
 ```
 
+- ts.config.json
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "extends": "lvyjs/tsconfig.json"
+}
+```
+
 - lvy.config.ts
 
 ```ts
@@ -35,9 +50,32 @@ export default defineConfig({
 })
 ```
 
+
 ```sh
 npx lvy dev
 ```
+
+- 装载
+
+```ts
+import { readFileSync } from 'fs'
+// 得到该文件的绝对路径，类型 string
+import img_logo from '../logo.png'
+const data = readFileSync(img_logo, 'utf-8')
+```
+
+- 别名
+
+```ts
+import { readFileSync } from 'fs'
+// 得到该文件的绝对路径，类型 string
+import img_logo from '@src/asstes/img/logo.png'
+const data = readFileSync(img_logo, 'utf-8')
+```
+
+- 打包
+
+> 对src目录打包并输出到lib目录
 
 ```sh
 npx lvy build
