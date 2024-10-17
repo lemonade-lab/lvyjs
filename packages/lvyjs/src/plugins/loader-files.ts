@@ -1,11 +1,16 @@
 import { dirname, basename, resolve } from 'path'
 import { readFileSync } from 'fs'
 import { type InputPluginOption } from 'rollup'
+
+export type RollupAssetsOptions = { filter?: RegExp }
+
 /**
  * @param {Object} options
  * @returns {Object}
  */
-const rollupNodeFiles = ({ filter }: { filter: RegExp }) => {
+export const rollupAssets = ({
+  filter = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
+}: RollupAssetsOptions = {}) => {
   return {
     name: 'rollup-node-files',
     resolveId(source, importer) {
@@ -34,5 +39,3 @@ const rollupNodeFiles = ({ filter }: { filter: RegExp }) => {
     }
   } as InputPluginOption
 }
-
-export { rollupNodeFiles }

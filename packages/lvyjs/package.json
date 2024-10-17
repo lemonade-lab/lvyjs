@@ -51,10 +51,6 @@
     "./env": {
       "types": "./env.d.ts"
     },
-    "./plugins": {
-      "import": "./lib/plugins/index.js",
-      "types": "./lib/plugins/index.d.ts"
-    },
     "./tsconfig.json": {
       "import": "./tsconfig.json",
       "types": "./tsconfig.json"

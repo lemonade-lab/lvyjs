@@ -16,7 +16,7 @@
 npm install lvyjs -D
 ```
 
-- ts.config.json
+- tsconfig.json
 
 ```json
 {

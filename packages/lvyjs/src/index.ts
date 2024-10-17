@@ -47,4 +47,4 @@ const main = async () => {
 
 main()
 
-export { defineConfig } from './store.js'
+export { defineConfig, initConfig } from './store.js'

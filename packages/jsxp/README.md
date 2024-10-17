@@ -169,15 +169,11 @@ yarn add tailwind -W
 - tailwind.config.js
 
 ```js
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
 /**
  * @type {import('tailwindcss').Config}
  */
 export default {
-  // 内容
-  content: ['src/**/*.{jsx.tsx.html}'],
-  plugins: []
+  content: ['src/**/*.{jsx.tsx.html}']
 }
 ```
 
