@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'fs'
 import { spawn } from 'child_process'
 import { type Plugin } from 'esbuild'
 import crypto from 'node:crypto'
+import JSON5 from 'json5'
 
 let tsconfig = null
 let aliases = {}
@@ -15,7 +16,7 @@ const init = () => {
     const tsconfigPath = resolve(process.cwd(), 'tsconfig.json')
     if (existsSync(tsconfigPath)) {
       const tsconfigContent = readFileSync(tsconfigPath, 'utf-8')
-      tsconfig = JSON.parse(tsconfigContent)
+      tsconfig = JSON5.parse(tsconfigContent)
       aliases = tsconfig.compilerOptions?.paths || {}
     } else {
       tsconfig = 'error'
@@ -42,6 +43,9 @@ const startCssPost = (input: string, output: string) => {
   })
   cssPostProcess.on('error', err => {
     console.error('Failed to start Tailwind process:', err)
+  })
+  process.on('exit', () => {
+    cssPostProcess.kill()
   })
 }
 
@@ -148,12 +152,13 @@ export type ESBuildAsstesOptions = {
  *
  * @param param0
  */
-export const esBuildAsstes = (optoins?: ESBuildAsstesOptions): Plugin => {
+export const esBuildAsstes = (optoins: ESBuildAsstesOptions = {}): Plugin => {
   // 默认配置
-  const { filter = assetsReg, namespace = 'assets' } = optoins || {}
+  const filter = optoins?.filter ?? assetsReg
+  const namespace = optoins?.namespace ?? 'assets'
   // 返回插件
   return {
-    name: 'file-loader',
+    name: 'assets-loader',
     setup(build) {
       const outputDirs = new Map()
       // 过滤图片文件
@@ -196,9 +201,9 @@ export type ESBuildCSSOptions = {
  * @param param0
  * @returns
  */
-export const esBuildCSS = (optoins?: ESBuildCSSOptions): Plugin => {
-  // 默认配置
-  const { filter = cssReg, namespace = 'css' } = optoins || {}
+export const esBuildCSS = (optoins: ESBuildCSSOptions = {}): Plugin => {
+  const filter = optoins?.filter || cssReg
+  const namespace = optoins?.namespace || 'css'
   // 返回插件
   return {
     name: 'css-loader',

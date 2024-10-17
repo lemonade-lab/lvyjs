@@ -28,7 +28,7 @@ export type Options = {
     /**
      * 执行
      */
-    callback?: () => void
+    useApp?: () => void
   }[]
   /**
    * 运行时配置

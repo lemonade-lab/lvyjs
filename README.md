@@ -35,7 +35,6 @@ npm install lvyjs -D
 
 ```ts
 import { defineConfig } from 'lvyjs'
-import { alias, files } from 'lvyjs/plugins'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
@@ -43,19 +42,14 @@ const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [
     {
-      name: 'my-app',
-      callback: () => {
-        // 准备工作完成后执行
-      }
+      name: 'lvy-test-app',
+      useApp: () => import('./src/index')
     }
   ],
   build: {
-    plugins: [
-      alias({
-        entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
-      }),
-      files({ filter: /\.(png|jpg)$/ })
-    ]
+    alias: {
+      entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
+    }
   }
 })
 ```

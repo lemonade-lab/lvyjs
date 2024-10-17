@@ -20,9 +20,9 @@ const onDev = async () => {
   }
   // 执行loader
   await import('./loader/main.js')
-  // 执行callback
+  // 执行 useApp
   for (const plugin of global.lvyConfig.plugins) {
-    if (plugin?.callback) await plugin.callback()
+    if (plugin?.useApp) await plugin.useApp()
   }
 }
 

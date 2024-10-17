@@ -6,10 +6,8 @@ const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [
     {
-      name: 'lvy-plugin-app',
-      callback: () => {
-        import('./src/test')
-      }
+      name: 'lvy-test-app',
+      useApp: () => import('./src/index')
     }
   ],
   build: {
