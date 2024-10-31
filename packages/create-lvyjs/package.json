@@ -1,0 +1,32 @@
+{
+  "name": "create-lvyjs",
+  "version": "0.0.3",
+  "description": "lvyjs dev",
+  "author": "ningmengchongshui",
+  "main": "bin/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node bin/index.js"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "16.7.0"
+  },
+  "bin": {
+    "create-lvyjs": "bin/index.js"
+  },
+  "keywords": [
+    "lvyjs"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "bugs": "https://github.com/lvyjs/core",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lvyjs/core.git"
+  }
+}
