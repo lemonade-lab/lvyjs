@@ -8,8 +8,8 @@ const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [
     {
-      name: 'alemonjs',
-      useApp: () => process.argv.includes('--alemonjs') && useAlemonJS()
+      name: 'app',
+      useApp: () => process.argv.includes('--app') && useAlemonJS()
     },
     {
       name: 'jsxp',

@@ -18,17 +18,12 @@
     "check-format": "git diff --exit-code"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "jsxp": "^1.0.4"
   },
   "devDependencies": {
-    "@types/lodash-es": "^4.17.12",
     "@types/node": "^20.8.5",
-    "@types/node-schedule": "^2.1.7",
-    "@types/react": "^18.3.4",
     "icqq": "^0.6.10",
-    "lvyjs": "^0.1.0",
+    "lvyjs": "^0.1.1",
     "prettier": "^3.0.3",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.4.5",
