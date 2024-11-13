@@ -1,5 +1,5 @@
 import { buildAndRun } from './build/rullup.js'
-import { initConfig } from './store.js'
+import { initConfig } from './loader/store.js'
 
 /**
  * @param input
@@ -19,7 +19,7 @@ const onDev = async () => {
     }
   }
   // 执行loader
-  await import('./loader/main.js')
+  await import('./main.js')
   // 执行 useApp
   for (const plugin of global.lvyConfig.plugins) {
     if (plugin?.useApp) await plugin.useApp()
@@ -47,4 +47,4 @@ const main = async () => {
 
 main()
 
-export { defineConfig, initConfig } from './store.js'
+export { defineConfig, initConfig } from './loader/store.js'

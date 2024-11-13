@@ -2,13 +2,13 @@ import { RollupAliasOptions } from '@rollup/plugin-alias'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import { RollupOptions } from 'rollup'
-import { RollupStylesCSSImportOptions } from './plugins/loader-css'
+import { RollupStylesCSSImportOptions } from '../plugins/loader-css'
 import { RollupCommonJSOptions } from '@rollup/plugin-commonjs'
 import { RollupJsonOptions } from '@rollup/plugin-json'
 import { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import { SameShape, BuildOptions } from 'esbuild'
-import { RollupAssetsOptions } from './plugins/index'
-import { ESBuildAsstesOptions, ESBuildCSSOptions } from './loader/plugins'
+import { RollupAssetsOptions } from '../plugins/index'
+import { ESBuildAsstesOptions, ESBuildCSSOptions } from './plugins'
 
 export type Options = {
   /**

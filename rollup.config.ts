@@ -87,17 +87,17 @@ const build1 = (name = 'lvyjs') => {
 }
 
 const build2 = (name = 'lvyjs') => {
-  const input = `packages/${name}/src/loader/index.ts`
-  const dir = `packages/${name}/lib/loader`
-  const inc = `packages/${name}/src/loader/**/*`
+  const input = `packages/${name}/src/loader.ts`
+  const dir = `packages/${name}/lib`
+  const inc = `packages/${name}/src/**/*`
   config.push(buildJs(input, dir, inc))
   config.push(buildDts(input, dir, inc))
 }
 
 const build3 = (name = 'lvyjs') => {
-  const input = `packages/${name}/src/loader/main.ts`
-  const dir = `packages/${name}/lib/loader`
-  const inc = `packages/${name}/src/loader/**/*`
+  const input = `packages/${name}/src/main.ts`
+  const dir = `packages/${name}/lib`
+  const inc = `packages/${name}/src/**/*`
   config.push(buildJs(input, dir, inc))
   config.push(buildDts(input, dir, inc))
 }

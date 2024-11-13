@@ -8,28 +8,11 @@ const plugins = []
  *
  */
 const initPlugins = async () => {
-  for (const key in global.lvyConfig.esbuild) {
-    if (typeof global.lvyConfig.esbuild[key] == 'boolean') {
-      continue
-    }
+  if (typeof global.lvyConfig?.esbuild?.assets != 'boolean') {
+    plugins.push(esBuildAsstes(global.lvyConfig.esbuild.assets))
   }
-  // 如果不存在这些配置
-  const keys = ['assets', 'styles']
-  for (const key of keys) {
-    // 如果是布尔值
-    if (typeof global.lvyConfig.esbuild[key] == 'boolean') {
-      continue
-    }
-    // 存在这些配置
-    if (global.lvyConfig.esbuild[key]) {
-      continue
-    }
-    //
-    if (key == 'assets') {
-      plugins.push(esBuildAsstes())
-    } else if (key === 'styles') {
-      plugins.push(esBuildCSS())
-    }
+  if (typeof global.lvyConfig?.esbuild?.styles != 'boolean') {
+    plugins.push(esBuildCSS(global.lvyConfig.esbuild.styles))
   }
 }
 
@@ -43,7 +26,7 @@ export const ESBuild = async (input: string) => {
   if (!global.lvyConfig) global.lvyConfig = {}
   if (!global.lvyConfig.esbuild) global.lvyConfig.esbuild = {}
 
-  // 如果没有插件
+  // 没有插件时，检查是否有可用插件。
   if (plugins.length === 0) {
     // init plugisn
     await initPlugins()

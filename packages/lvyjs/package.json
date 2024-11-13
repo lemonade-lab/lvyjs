@@ -1,6 +1,6 @@
 {
   "name": "lvyjs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "tsx compile script",
   "author": "lemonade",
   "license": "MIT",
@@ -42,8 +42,8 @@
       "types": "./lib/index.d.ts"
     },
     "./loader": {
-      "import": "./lib/loader/index.js",
-      "types": "./lib/loader/index.d.ts"
+      "import": "./lib/loader.js",
+      "types": "./lib/loader.d.ts"
     },
     "./register": {
       "import": "./lib/loader/main.js",

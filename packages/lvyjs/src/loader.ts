@@ -1,4 +1,7 @@
-import { ESBuild } from './esbuild'
+import { ESBuild } from './loader/esbuild'
+
+import { initConfig } from './loader/store'
+await initConfig()
 
 type LoaderResult = {
   format?: string // 例如，模块格式

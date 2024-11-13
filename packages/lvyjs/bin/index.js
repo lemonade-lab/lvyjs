@@ -2,6 +2,7 @@
 import { fork } from 'child_process'
 import { join, dirname, relative } from 'path'
 import { fileURLToPath } from 'node:url'
+import { existsSync } from 'fs'
 const args = [...process.argv.slice(2)]
 const currentFilePath = fileURLToPath(import.meta.url)
 const currentDirPath = dirname(currentFilePath)
@@ -35,7 +36,11 @@ if (args.includes('build')) {
     jsdir,
     '--lvy-dev'
   ]
-  const msg = fork(join(currentDirPath, '../../tsx/dist/cli.mjs'), [...argv, ...argsx], {
+  let tsxDir = join(currentDirPath, '../../tsx/dist/cli.mjs')
+  if (!existsSync(tsxDir)) {
+    tsxDir = join(currentDirPath, '../node_modules/tsx/dist/cli.mjs')
+  }
+  const msg = fork(tsxDir, [...argv, ...argsx], {
     stdio: 'inherit',
     env: Object.assign({}, process.env, {
       PKG_DIR: pkgFilr
