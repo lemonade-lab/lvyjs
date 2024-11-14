@@ -50,6 +50,15 @@ const startCssPost = (input: string, output: string) => {
 }
 
 /**
+ *
+ * @param inputPath
+ * @returns
+ */
+const convertPath = (inputPath: string) => {
+  return process.platform === 'win32' ? inputPath.replace(/\\/g, '/') : inputPath
+}
+
+/**
  * 生成模块内容
  * @param {string} relativePath 相对路径
  */
@@ -61,7 +70,7 @@ const generateModuleContent = (relativePath: string) => {
     'const reg = T ? /^file:\\/\\// : /^file:\\/\\/\\//;',
     "return new URL(path, basePath).href.replace(reg, '');",
     '};',
-    `const fileUrl = createUrl(import.meta.url, '${relativePath}');`,
+    `const fileUrl = createUrl(import.meta.url, '${convertPath(relativePath)}');`,
     'export default fileUrl;'
   ].join('\n')
   return contents
@@ -75,15 +84,6 @@ const getHash = (str: string) => {
   // 更新哈希对象内容
   hash.update(str)
   return hash.digest('hex')
-}
-
-/**
- *
- * @param inputPath
- * @returns
- */
-const convertPath = (inputPath: string) => {
-  return process.platform === 'win32' ? inputPath.replace(/\\/g, '/') : inputPath
 }
 
 const handleAsstesFile = (url: string) => {
