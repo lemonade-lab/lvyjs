@@ -108,10 +108,10 @@ const build = () => {
   } else if (process.env.build == 'tsxp') {
     BuildByName('tsxp')
   } else {
-    BuildByName('lvyjs')
     build1('lvyjs')
     build2('lvyjs')
     build3('lvyjs')
+    BuildByName('lvyjs')
   }
 }
 
