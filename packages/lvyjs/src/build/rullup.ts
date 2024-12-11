@@ -34,92 +34,95 @@ export const buildJS = async (inputs: string[], output: string) => {
   // 插件
   const plugins = []
 
-  for (const key in global.lvyConfig.build) {
-    if (typeof global.lvyConfig.build[key] == 'boolean') {
-      continue
-    }
-    if (key === 'alias' && !global.lvyConfig.build['@rollup/plugin-alias']) {
-      plugins.push(alias(global.lvyConfig.build[key]))
-    } else if (key === 'assets') {
-      plugins.push(rollupAssets(global.lvyConfig.build[key]))
-    } else if (key === 'styles') {
-      plugins.push(
-        styles({
-          mode: ['inject', () => '']
-        })
-      )
-      plugins.push(rollupStylesCSSImport(global.lvyConfig.build[key]))
-    } else if (key === 'commonjs' && !global.lvyConfig.build['@rollup/plugin-commonjs']) {
-      plugins.push(commonjs(global.lvyConfig.build[key]))
-    } else if (key === 'json' && !global.lvyConfig.build['@rollup/plugin-json']) {
-      plugins.push(json(global.lvyConfig.build[key]))
-    } else if (key === 'typescript' && !global.lvyConfig.build['@rollup/plugin-typescript']) {
-      plugins.push(typescript(global.lvyConfig.build[key]))
-    } else if (key === 'plugins') {
-      if (Array.isArray(global.lvyConfig.build[key])) {
-        for (const plugin of global.lvyConfig.build[key]) {
-          plugins.push(plugin)
-        }
-      }
-    } else {
-      const plugin = (await import(key)).default
-      plugins.push(plugin(global.lvyConfig.build[key]))
-    }
+  if (global.lvyConfig.alias) {
+    plugins.push(alias(global.lvyConfig.alias))
   }
 
-  // 如果不存在这些配置
-  const keys = ['assets', 'styles', 'commonjs', 'json', 'typescript']
+  if (global.lvyConfig.assets) {
+    plugins.push(rollupAssets(global.lvyConfig.assets))
+  } else {
+    plugins.push(rollupAssets())
+  }
 
-  for (const key of keys) {
-    // 如果是布尔值
-    if (typeof global.lvyConfig.build[key] == 'boolean') {
-      continue
-    }
-    // 存在这些配置
-    if (global.lvyConfig.build[key]) {
-      continue
-    }
+  if (typeof global.lvyConfig.build != 'boolean') {
     //
-    if (key == 'assets') {
-      plugins.push(rollupAssets())
-    } else if (key == 'styles') {
-      plugins.push(
-        styles({
-          mode: ['inject', () => '']
-        })
-      )
-      plugins.push(rollupStylesCSSImport())
-    } else if (key === 'commonjs') {
-      plugins.push(commonjs())
-    } else if (key === 'json') {
-      plugins.push(json())
-    } else if (key === 'typescript') {
-      plugins.push(typescript())
-    } else if (key === 'plugins') {
-      plugins.push(alias())
+    for (const key in global.lvyConfig.build) {
+      if (typeof global.lvyConfig.build[key] == 'boolean') {
+        continue
+      }
+      if (key === 'styles') {
+        plugins.push(
+          styles({
+            mode: ['inject', () => '']
+          })
+        )
+        plugins.push(rollupStylesCSSImport(global.lvyConfig.build[key]))
+      } else if (key === 'commonjs' && !global.lvyConfig.build['@rollup/plugin-commonjs']) {
+        plugins.push(commonjs(global.lvyConfig.build[key]))
+      } else if (key === 'json' && !global.lvyConfig.build['@rollup/plugin-json']) {
+        plugins.push(json(global.lvyConfig.build[key]))
+      } else if (key === 'typescript' && !global.lvyConfig.build['@rollup/plugin-typescript']) {
+        plugins.push(typescript(global.lvyConfig.build[key]))
+      } else if (key === 'plugins') {
+        if (Array.isArray(global.lvyConfig.build[key])) {
+          for (const plugin of global.lvyConfig.build[key]) {
+            plugins.push(plugin)
+          }
+        }
+      } else {
+        const plugin = (await import(key)).default
+        plugins.push(plugin(global.lvyConfig.build[key]))
+      }
+    }
+
+    // 如果不存在这些配置
+    const keys = ['styles', 'commonjs', 'json', 'typescript']
+
+    for (const key of keys) {
+      // 如果是布尔值
+      if (typeof global.lvyConfig.build[key] == 'boolean') {
+        continue
+      }
+      // 存在这些配置
+      if (global.lvyConfig.build[key]) {
+        continue
+      }
+      //
+      if (key == 'styles') {
+        plugins.push(
+          styles({
+            mode: ['inject', () => '']
+          })
+        )
+        plugins.push(rollupStylesCSSImport())
+      } else if (key === 'commonjs') {
+        plugins.push(commonjs())
+      } else if (key === 'json') {
+        plugins.push(json())
+      } else if (key === 'typescript') {
+        plugins.push(typescript())
+      }
     }
   }
 
   // rollup 配置
-  const Options = global.lvyConfig.build?.rollupOptions ?? {}
-
-  // rollup 配置
-  const rollupOptions = {
-    input: inputs,
-    plugins: plugins,
-    onwarn: onwarn,
-    ...Options
-  }
+  const rollupOptions = global.lvyConfig?.rollupOptions ?? {}
+  const rollupPlugins = global.lvyConfig?.rollupPlugins ?? []
 
   // build
-  const bundle = await rollup(rollupOptions)
+  const bundle = await rollup({
+    input: inputs,
+    plugins: [...plugins, ...rollupPlugins],
+    onwarn: onwarn
+  })
 
   // 写入输出文件
   await bundle.write({
     dir: output,
     format: 'es',
     sourcemap: false,
-    preserveModules: true
+    preserveModules: true,
+    ...rollupOptions
   })
 }
 

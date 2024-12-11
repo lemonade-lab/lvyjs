@@ -26,5 +26,5 @@
       "@src/*": ["src/*"]
     }
   },
-  "include": ["packages/**/*", "lvy.config.ts", "src/**/*"]
+  "include": ["packages/**/*", "lvy.config.js", "src/**/*"]
 }

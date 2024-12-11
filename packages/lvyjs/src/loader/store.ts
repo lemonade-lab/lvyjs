@@ -1,14 +1,15 @@
 import { RollupAliasOptions } from '@rollup/plugin-alias'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import { RollupOptions } from 'rollup'
 import { RollupStylesCSSImportOptions } from '../plugins/loader-css'
 import { RollupCommonJSOptions } from '@rollup/plugin-commonjs'
 import { RollupJsonOptions } from '@rollup/plugin-json'
 import { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import { SameShape, BuildOptions } from 'esbuild'
-import { RollupAssetsOptions } from '../plugins/index'
-import { ESBuildAsstesOptions, ESBuildCSSOptions } from './plugins'
+import { ESBuildCSSOptions } from './plugins'
+import { RollupBuild } from 'rollup'
+
+type RollupBuildOptions = Parameters<RollupBuild['write']>['0']
 
 export type Options = {
   /**
@@ -31,63 +32,61 @@ export type Options = {
     useApp?: () => void
   }[]
   /**
+   * 别名
+   */
+  alias?: { entries?: RollupAliasOptions['entries'] }
+  /**
+   * 静态资源识别
+   */
+  assets?: {
+    filter?: RegExp
+  }
+  /**
+   *
+   */
+  esBuildOptions?: SameShape<BuildOptions, BuildOptions>
+  /**
    * 运行时配置
    */
   esbuild?: {
     [key: string]: any
     /**
-     * 资源
-     */
-    assets?: ESBuildAsstesOptions | false
-    /**
      * 样式处理
      */
     styles?: ESBuildCSSOptions | false
-    /**
-     * ⚠️ 直接覆盖esbuild配置
-     */
-    options?: SameShape<BuildOptions, BuildOptions>
   }
+  /**
+   * ⚠️ RollupBuild['write'] 配置
+   */
+  rollupOptions?: RollupBuildOptions
+  /**
+   *使用插件
+   */
+  rollupPlugins?: any[]
   /**
    * 打包时配置
    */
-  build?: {
-    [key: string]: any
-    /**
-     * 别名
-     */
-    alias?: RollupAliasOptions | false
-    /**
-     * 文件过滤
-     */
-    assets?: RollupAssetsOptions | false
-    /**
-     * 样式处理配置
-     */
-    styles?: RollupStylesCSSImportOptions | false
-    /**
-     * cjs文件处理
-     */
-    commonjs?: RollupCommonJSOptions | false
-    /**
-     * josn文件处理
-     */
-    json?: RollupJsonOptions | false
-    /**
-     * ts配置
-     */
-    typescript?: RollupTypescriptOptions | false
-    /**
-     *
-     */
-    plugins?: any[]
-    /**
-     * ⚠️ 直接覆盖build配置
-     */
-    rollupOptions?: {
-      input?: string | string[]
-    } & RollupOptions
-  }
+  build?:
+    | {
+        [key: string]: any
+        /**
+         * 样式处理配置
+         */
+        styles?: RollupStylesCSSImportOptions | false
+        /**
+         * cjs文件处理
+         */
+        commonjs?: RollupCommonJSOptions | false
+        /**
+         * josn文件处理
+         */
+        json?: RollupJsonOptions | false
+        /**
+         * ts配置
+         */
+        typescript?: RollupTypescriptOptions | false
+      }
+    | false
 }
 
 /**

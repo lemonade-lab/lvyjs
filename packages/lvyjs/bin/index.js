@@ -13,9 +13,11 @@ if (args.includes('build')) {
   const jsdir = relative(process.cwd(), jsFile)
   const argsx = args.filter(arg => arg !== 'build')
   let tsxDir = join(currentDirPath, '../../tsx/dist/cli.mjs')
-  console.log('tsxDir', tsxDir)
   if (!existsSync(tsxDir)) {
     tsxDir = join(currentDirPath, '../node_modules/tsx/dist/cli.mjs')
+  }
+  if (!existsSync(tsxDir)) {
+    tsxDir = join(process.cwd(), 'node_modules/tsx/dist/cli.mjs')
   }
   const msg = fork(tsxDir, [jsdir, '--lvy-build', ...argsx], {
     stdio: 'inherit',
@@ -38,9 +40,11 @@ if (args.includes('build')) {
     '--lvy-dev'
   ]
   let tsxDir = join(currentDirPath, '../../tsx/dist/cli.mjs')
-  console.log('tsxDir', tsxDir)
   if (!existsSync(tsxDir)) {
     tsxDir = join(currentDirPath, '../node_modules/tsx/dist/cli.mjs')
+  }
+  if (!existsSync(tsxDir)) {
+    tsxDir = join(process.cwd(), 'node_modules/tsx/dist/cli.mjs')
   }
   const msg = fork(tsxDir, [...argv, ...argsx], {
     stdio: 'inherit',

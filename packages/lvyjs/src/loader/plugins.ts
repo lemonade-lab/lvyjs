@@ -1,33 +1,11 @@
 import { dirname, join, relative, resolve } from 'path'
-import { existsSync, readFileSync } from 'fs'
 import { spawn } from 'child_process'
 import { type Plugin } from 'esbuild'
 import crypto from 'node:crypto'
-import JSON5 from 'json5'
+import { RollupAliasOptions } from '@rollup/plugin-alias'
 
-let tsconfig = null
-let aliases = {}
 const assetsReg = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
 const cssReg = /\.(css|scss)$/
-
-// 初始化函数，读取并解析 tsconfig.json 文件
-const init = () => {
-  try {
-    const tsconfigPath = resolve(process.cwd(), 'tsconfig.json')
-    if (existsSync(tsconfigPath)) {
-      const tsconfigContent = readFileSync(tsconfigPath, 'utf-8')
-      tsconfig = JSON5.parse(tsconfigContent)
-      aliases = tsconfig.compilerOptions?.paths || {}
-    } else {
-      tsconfig = 'error'
-    }
-  } catch {
-    tsconfig = 'error'
-  }
-}
-
-// 初始化配置
-init()
 
 /**
  *
@@ -86,17 +64,26 @@ const getHash = (str: string) => {
   return hash.digest('hex')
 }
 
+let entries = null
+
+export const esBuildAlias = (alias?: { entries?: RollupAliasOptions['entries'] }) => {
+  if (!entries) {
+    entries = alias?.entries ?? []
+  }
+}
+
 const handleAsstesFile = (url: string) => {
-  for (const alias in aliases) {
-    const aliasPattern = alias.replace('/*', '')
-    if (url.startsWith(aliasPattern)) {
-      const aliasPaths = aliases[alias]
-      for (const aliasPath of aliasPaths) {
-        const fileUrl = join(
-          process.cwd(),
-          aliasPath.replace('/*', ''),
-          url.replace(aliasPattern, '')
-        )
+  for (const { find, replacement } of entries) {
+    if (typeof find === 'string') {
+      // 使用 startsWith 处理字符串类型
+      if (url.startsWith(find)) {
+        const fileUrl = join(replacement, url.replace(find, ''))
+        return `export default "${convertPath(fileUrl)}";`
+      }
+    } else if (find instanceof RegExp) {
+      // 使用 test 方法处理正则表达式类型
+      if (find.test(url)) {
+        const fileUrl = join(replacement, url.replace(find, ''))
         return `export default "${convertPath(fileUrl)}";`
       }
     }
@@ -122,19 +109,21 @@ const handleCSS = (fileUrl: string) => {
 /**
  * 处理路径别名的加载
  * @param {string} url URL
- * @returns {object|null} 加载结果
+ * @returns {string|null} 加载结果
  */
 const handleCSSPath = (url: string) => {
-  for (const alias in aliases) {
-    const aliasPattern = alias.replace('/*', '')
-    if (url.startsWith(aliasPattern)) {
-      const aliasPaths = aliases[alias]
-      for (const aliasPath of aliasPaths) {
-        const fileUrl = join(
-          process.cwd(),
-          aliasPath.replace('/*', ''),
-          url.replace(aliasPattern, '')
-        )
+  for (const { find, replacement } of entries) {
+    if (typeof find === 'string') {
+      // 使用 startsWith 处理字符串类型
+      if (url.startsWith(find)) {
+        const fileUrl = join(replacement, url.replace(find, ''))
+        const outputDir = handleCSS(fileUrl)
+        return `export default "${convertPath(outputDir)}";`
+      }
+    } else if (find instanceof RegExp) {
+      // 使用 test 方法处理正则表达式类型
+      if (find.test(url)) {
+        const fileUrl = join(replacement, url.replace(find, ''))
         const outputDir = handleCSS(fileUrl)
         return `export default "${convertPath(outputDir)}";`
       }
@@ -145,7 +134,6 @@ const handleCSSPath = (url: string) => {
 
 export type ESBuildAsstesOptions = {
   filter?: RegExp
-  namespace?: string
 }
 
 /**
@@ -155,7 +143,7 @@ export type ESBuildAsstesOptions = {
 export const esBuildAsstes = (optoins: ESBuildAsstesOptions = {}): Plugin => {
   // 默认配置
   const filter = optoins?.filter ?? assetsReg
-  const namespace = optoins?.namespace ?? 'assets'
+  const namespace = 'assets'
   // 返回插件
   return {
     name: 'assets-loader',

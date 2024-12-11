@@ -46,10 +46,11 @@ export default defineConfig({
       useApp: () => import('./src/index')
     }
   ],
-  build: {
-    alias: {
-      entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
-    }
+  alias: {
+    entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
+  },
+  assets: {
+    filter: /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
   }
 })
 ```

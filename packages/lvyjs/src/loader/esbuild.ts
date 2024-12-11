@@ -1,5 +1,5 @@
 import esbuild from 'esbuild'
-import { esBuildAsstes, esBuildCSS } from './plugins'
+import { esBuildAlias, esBuildAsstes, esBuildCSS } from './plugins'
 
 // 插件
 const plugins = []
@@ -7,9 +7,9 @@ const plugins = []
 /**
  *
  */
-const initPlugins = async () => {
-  if (typeof global.lvyConfig?.esbuild?.assets != 'boolean') {
-    plugins.push(esBuildAsstes(global.lvyConfig.esbuild.assets))
+const initPlugins = () => {
+  if (typeof global.lvyConfig?.assets != 'boolean') {
+    plugins.push(esBuildAsstes(global.lvyConfig.assets))
   }
   if (typeof global.lvyConfig?.esbuild?.styles != 'boolean') {
     plugins.push(esBuildCSS(global.lvyConfig.esbuild.styles))
@@ -26,6 +26,9 @@ export const ESBuild = async (input: string) => {
   if (!global.lvyConfig) global.lvyConfig = {}
   if (!global.lvyConfig.esbuild) global.lvyConfig.esbuild = {}
 
+  // alias
+  if (global.lvyConfig.alias) esBuildAlias(global.lvyConfig.alias)
+
   // 没有插件时，检查是否有可用插件。
   if (plugins.length === 0) {
     // init plugisn
@@ -33,7 +36,7 @@ export const ESBuild = async (input: string) => {
   }
 
   //
-  const options = global.lvyConfig.esbuild?.options || {}
+  const options = global.lvyConfig?.esBuildOptions || {}
 
   // 构建
   const result = await esbuild.build({
