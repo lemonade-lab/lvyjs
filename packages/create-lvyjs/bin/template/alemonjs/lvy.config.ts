@@ -7,13 +7,9 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [
-    {
-      name: 'app',
-      useApp: () => process.argv.includes('--app') && useAlemonJS()
-    },
-    {
-      name: 'jsxp',
-      useApp: () => process.argv.includes('--view') && useJSXP()
+    () => {
+      if (process.argv.includes('--app')) return () => useAlemonJS()
+      if (process.argv.includes('--view')) return () => useJSXP()
     }
   ],
   build: {

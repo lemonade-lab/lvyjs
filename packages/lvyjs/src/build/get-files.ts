@@ -5,13 +5,13 @@ import { readdirSync } from 'fs'
  * @param dir 目录路径
  * @returns 文件路径数组
  */
-export const getFiles = (dir: string) => {
+export const getScriptFiles = (dir: string) => {
   const results: string[] = []
   const list = readdirSync(dir, { withFileTypes: true })
   list.forEach(item => {
     const fullPath = join(dir, item.name)
     if (item.isDirectory()) {
-      results.push(...getFiles(fullPath))
+      results.push(...getScriptFiles(fullPath))
     } else if (
       item.isFile() &&
       /\.(ts|js|jsx|tsx)$/.test(item.name) &&

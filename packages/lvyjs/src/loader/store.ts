@@ -1,4 +1,4 @@
-import { RollupAliasOptions } from '@rollup/plugin-alias'
+import { Alias } from '@rollup/plugin-alias'
 import { existsSync } from 'fs'
 import { join } from 'path'
 import { RollupStylesCSSImportOptions } from '../plugins/loader-css'
@@ -15,30 +15,23 @@ export type Options = {
   /**
    * 配置调整机及其回调插件
    */
-  plugins?: {
-    /**
-     * 应用名
-     */
-    name: string
-    /**
-     * ⚠️直接optoins进行调整
-     * @param options
-     * @returns
-     */
-    config?: (options: Options) => Options
-    /**
-     * 执行
-     */
-    useApp?: () => void
-  }[]
+  plugins?: ((options: Options) => ((options: Options) => void) | void | undefined | null)[]
   /**
    * 别名
    */
-  alias?: { entries?: RollupAliasOptions['entries'] }
+  alias?: {
+    /**
+     * 别名规则
+     */
+    entries?: Alias[]
+  }
   /**
    * 静态资源识别
    */
   assets?: {
+    /**
+     * 过滤得到指定格式的文件识别之为静态资源
+     */
     filter?: RegExp
   }
   /**
@@ -58,7 +51,12 @@ export type Options = {
   /**
    * ⚠️ RollupBuild['write'] 配置
    */
-  rollupOptions?: RollupBuildOptions
+  rollupOptions?: RollupBuildOptions & {
+    /**
+     * 默认 src
+     */
+    input?: string
+  }
   /**
    *使用插件
    */
@@ -88,6 +86,15 @@ export type Options = {
       }
     | false
 }
+
+/**
+ *
+ * @param options
+ * @returns
+ */
+export const usePlugin = (
+  load: (options: Options) => ((options: Options) => void) | void | undefined | null
+) => load
 
 /**
  *

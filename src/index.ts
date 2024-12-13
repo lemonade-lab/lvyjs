@@ -1,7 +1,7 @@
-import json from '@src/ass/test.json'
+import json from '@src/assets/test.json'
 // tudo bug
-import png from '@src/ass/test.png'
-import css from '@src/ass/test.css'
+import png from '@src/assets/test.png'
+import css from '@src/assets/test.css'
 console.log('json', json)
 console.log('png', png)
 console.log('css', css)

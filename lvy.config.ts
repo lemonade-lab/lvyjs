@@ -3,12 +3,11 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const server = () => import('./src/index')
 export default defineConfig({
   plugins: [
-    {
-      name: 'lvy-test-app',
-      useApp: () => import('./src/index')
-    }
+    // loader
+    () => server
   ],
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
@@ -17,14 +16,8 @@ export default defineConfig({
     filter: /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
   },
   rollupOptions: {
-    format: 'cjs', // default esm
-    intro: `/**  https://vlyjs.dev  **/`,
-    outro: ` /**  dev end  **/ `,
-    entryFileNames: '[name].js',
-    chunkFileNames: '[name]-[hash].js',
-    assetFileNames: '[name]-[hash][extname]'
-  },
-  rollupPlugins: [
-    //
-  ]
+    intro: `/**  https://lvyjs.dev script start **/`,
+    outro: ` /**  https://lvyjs.dev script end  **/ `,
+    assetFileNames: 'assets/[name]-[hash][extname]'
+  }
 })

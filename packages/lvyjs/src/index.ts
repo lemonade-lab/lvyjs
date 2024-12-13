@@ -5,34 +5,25 @@ import { initConfig } from './loader/store.js'
  * @param input
  */
 const onDev = async () => {
-  // 修改config
-  for (const plugin of global.lvyConfig.plugins) {
-    if (plugin?.config) {
-      const cfg = await plugin.config(global.lvyConfig)
-      for (const key in cfg) {
-        // 不能覆盖plugins
-        if (cfg[key] != 'plugins') {
-          // 覆盖
-          global.lvyConfig[key] = cfg[key]
-        }
+  const apps: any = []
+  if (Array.isArray(global.lvyConfig?.plugins)) {
+    // 修改config
+    for (const plugin of global.lvyConfig.plugins) {
+      if (!plugin) {
+        continue
       }
+      apps.push(plugin(global.lvyConfig))
     }
   }
   // 执行loader
   await import('./main.js')
-  // 执行 useApp
-  for (const plugin of global.lvyConfig.plugins) {
-    if (plugin?.useApp) await plugin.useApp()
+  //
+  for (const app of apps) {
+    if (!app) {
+      continue
+    }
+    if (typeof app == 'function') app(global.lvyConfig)
   }
-}
-
-/**
- *
- * @param input
- * @param ouput
- */
-const onBuild = () => {
-  buildAndRun('src', 'lib')
 }
 
 const main = async () => {
@@ -41,10 +32,10 @@ const main = async () => {
     onDev()
   } else if (process.argv.includes('--lvy-build')) {
     await initConfig()
-    onBuild()
+    buildAndRun()
   }
 }
 
 main()
 
-export { defineConfig, initConfig } from './loader/store.js'
+export { defineConfig, initConfig, usePlugin } from './loader/store.js'

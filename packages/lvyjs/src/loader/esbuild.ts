@@ -2,17 +2,17 @@ import esbuild from 'esbuild'
 import { esBuildAlias, esBuildAsstes, esBuildCSS } from './plugins'
 
 // 插件
-const plugins = []
+const plugins: esbuild.Plugin[] = []
 
 /**
  *
  */
 const initPlugins = () => {
-  if (typeof global.lvyConfig?.assets != 'boolean') {
+  if (global.lvyConfig?.assets) {
     plugins.push(esBuildAsstes(global.lvyConfig.assets))
   }
   if (typeof global.lvyConfig?.esbuild?.styles != 'boolean') {
-    plugins.push(esBuildCSS(global.lvyConfig.esbuild.styles))
+    plugins.push(esBuildCSS(global.lvyConfig.esbuild?.styles))
   }
 }
 
@@ -55,7 +55,9 @@ export const ESBuild = async (input: string) => {
     external: ['*'],
     ...options
   })
-
+  if (!result.outputFiles) {
+    return ''
+  }
   // 返回结果
   return result.outputFiles.map(file => new TextDecoder().decode(file.contents)).join('\n')
 }

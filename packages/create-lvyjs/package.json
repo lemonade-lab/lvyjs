@@ -1,6 +1,6 @@
 {
   "name": "create-lvyjs",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "lvyjs dev",
   "author": "ningmengchongshui",
   "main": "bin/index.js",
@@ -24,7 +24,7 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "bugs": "https://github.com/lvyjs/core",
+  "bugs": "https://github.com/lvyjs/core/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/lvyjs/core.git"

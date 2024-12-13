@@ -1,6 +1,6 @@
 {
   "name": "lvyjs",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "tsx compile script",
   "author": "lemonade",
   "license": "MIT",
@@ -69,9 +69,9 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "bugs": "https://github.com/lemonade-lab/lvy/issues",
+  "bugs": "https://github.com/lvyjs/core/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lemonade-lab/lvy.git"
+    "url": "https://github.com/lvyjs/core.git"
   }
 }

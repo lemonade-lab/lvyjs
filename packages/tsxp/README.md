@@ -1,5 +1,7 @@
 # React-Puppeteer
 
+基于 tsx、esbuld、rollup 所构建的，为 nodejs 应用设计的打包工具
+
 > 已废弃，请使用 jsxp 代替
 
 这是一个可以在 tsx 环境中,使用 puppeteer 对 tsx 组件进行截图的库

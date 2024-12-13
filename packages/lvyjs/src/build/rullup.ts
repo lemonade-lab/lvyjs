@@ -1,10 +1,10 @@
-import { LoggingFunction, rollup, RollupLog } from 'rollup'
+import { InputPluginOption, LoggingFunction, rollup, RollupLog } from 'rollup'
 import { join } from 'path'
 import typescript from '@rollup/plugin-typescript'
 import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import styles from 'rollup-plugin-styles'
-import { getFiles } from './get-files'
+import { getScriptFiles } from './get-files'
 import alias from '@rollup/plugin-alias'
 import { rollupAssets, rollupStylesCSSImport } from '../plugins/index'
 
@@ -27,14 +27,14 @@ const onwarn = (warning: RollupLog, warn: LoggingFunction) => {
  * @param inputs
  * @param output
  */
-export const buildJS = async (inputs: string[], output: string) => {
+export const buildJS = async (inputs: string[]) => {
   if (!global.lvyConfig) global.lvyConfig = {}
   if (!global.lvyConfig.build) global.lvyConfig.build = {}
 
   // 插件
-  const plugins = []
+  const plugins: InputPluginOption = []
 
-  if (global.lvyConfig.alias) {
+  if (global.lvyConfig?.alias) {
     plugins.push(alias(global.lvyConfig.alias))
   }
 
@@ -118,10 +118,11 @@ export const buildJS = async (inputs: string[], output: string) => {
 
   // 写入输出文件
   await bundle.write({
-    dir: output,
+    dir: 'lib',
     format: 'es',
     sourcemap: false,
     preserveModules: true,
+    assetFileNames: 'assets/[name]-[hash][extname]',
     ...rollupOptions
   })
 }
@@ -130,7 +131,13 @@ export const buildJS = async (inputs: string[], output: string) => {
  *
  * @param script
  */
-export async function buildAndRun(input: string, output: string) {
-  const inputFiles = getFiles(join(process.cwd(), input))
-  await buildJS(inputFiles, output)
+export async function buildAndRun() {
+  // rollup 配置
+  let inputDir = 'src'
+  if (global.lvyConfig?.rollupOptions?.input) {
+    inputDir = global.lvyConfig.rollupOptions.input
+    delete global.lvyConfig.rollupOptions['input']
+  }
+  const inputFiles = getScriptFiles(join(process.cwd(), inputDir))
+  await buildJS(inputFiles)
 }

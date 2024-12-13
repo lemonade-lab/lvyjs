@@ -15,13 +15,9 @@ const useYunzaiJS = async () => {
 }
 export default defineConfig({
   plugins: [
-    {
-      name: 'alemon',
-      useApp: () => process.argv.includes('--yunzai') && useYunzaiJS()
-    },
-    {
-      name: 'jsxp',
-      useApp: () => process.argv.includes('--view') && useJSXP()
+    () => {
+      if (process.argv.includes('--yunzai')) return () => useYunzaiJS()
+      if (process.argv.includes('--view')) return () => useJSXP()
     }
   ],
   build: {

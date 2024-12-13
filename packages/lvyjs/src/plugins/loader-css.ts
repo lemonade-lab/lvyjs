@@ -1,6 +1,7 @@
 import { createFilter } from '@rollup/pluginutils'
 import { basename, dirname, resolve } from 'node:path'
 import { type InputPluginOption } from 'rollup'
+import { cssReg } from './config'
 
 export type RollupStylesCSSImportOptions = { include?: RegExp }
 
@@ -8,14 +9,13 @@ export type RollupStylesCSSImportOptions = { include?: RegExp }
  *
  * @returns
  */
-export const rollupStylesCSSImport = ({
-  include = /\.(css|scss)$/i
-}: RollupStylesCSSImportOptions = {}) => {
+export const rollupStylesCSSImport = (options?: RollupStylesCSSImportOptions) => {
+  const { include = cssReg } = options ?? {}
   const filter = createFilter(include, null)
   return {
     name: 'c-css',
     resolveId(source, importer) {
-      if (filter(source)) {
+      if (filter(source) && importer) {
         return resolve(dirname(importer), source)
       }
     },

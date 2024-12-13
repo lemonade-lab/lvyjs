@@ -2,10 +2,8 @@ import { dirname, join, relative, resolve } from 'path'
 import { spawn } from 'child_process'
 import { type Plugin } from 'esbuild'
 import crypto from 'node:crypto'
-import { RollupAliasOptions } from '@rollup/plugin-alias'
-
-const assetsReg = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-const cssReg = /\.(css|scss)$/
+import { Alias } from '@rollup/plugin-alias'
+import { assetsReg, cssReg } from './config'
 
 /**
  *
@@ -64,27 +62,29 @@ const getHash = (str: string) => {
   return hash.digest('hex')
 }
 
-let entries = null
+let entries: Alias[] | null = null
 
-export const esBuildAlias = (alias?: { entries?: RollupAliasOptions['entries'] }) => {
+export const esBuildAlias = (alias?: { entries?: Alias[] }) => {
   if (!entries) {
     entries = alias?.entries ?? []
   }
 }
 
 const handleAsstesFile = (url: string) => {
-  for (const { find, replacement } of entries) {
-    if (typeof find === 'string') {
-      // 使用 startsWith 处理字符串类型
-      if (url.startsWith(find)) {
-        const fileUrl = join(replacement, url.replace(find, ''))
-        return `export default "${convertPath(fileUrl)}";`
-      }
-    } else if (find instanceof RegExp) {
-      // 使用 test 方法处理正则表达式类型
-      if (find.test(url)) {
-        const fileUrl = join(replacement, url.replace(find, ''))
-        return `export default "${convertPath(fileUrl)}";`
+  if (entries) {
+    for (const { find, replacement } of entries) {
+      if (typeof find === 'string') {
+        // 使用 startsWith 处理字符串类型
+        if (url.startsWith(find)) {
+          const fileUrl = join(replacement, url.replace(find, ''))
+          return `export default "${convertPath(fileUrl)}";`
+        }
+      } else if (find instanceof RegExp) {
+        // 使用 test 方法处理正则表达式类型
+        if (find.test(url)) {
+          const fileUrl = join(replacement, url.replace(find, ''))
+          return `export default "${convertPath(fileUrl)}";`
+        }
       }
     }
   }
@@ -112,23 +112,26 @@ const handleCSS = (fileUrl: string) => {
  * @returns {string|null} 加载结果
  */
 const handleCSSPath = (url: string) => {
-  for (const { find, replacement } of entries) {
-    if (typeof find === 'string') {
-      // 使用 startsWith 处理字符串类型
-      if (url.startsWith(find)) {
-        const fileUrl = join(replacement, url.replace(find, ''))
-        const outputDir = handleCSS(fileUrl)
-        return `export default "${convertPath(outputDir)}";`
-      }
-    } else if (find instanceof RegExp) {
-      // 使用 test 方法处理正则表达式类型
-      if (find.test(url)) {
-        const fileUrl = join(replacement, url.replace(find, ''))
-        const outputDir = handleCSS(fileUrl)
-        return `export default "${convertPath(outputDir)}";`
+  if (entries) {
+    for (const { find, replacement } of entries) {
+      if (typeof find === 'string') {
+        // 使用 startsWith 处理字符串类型
+        if (url.startsWith(find)) {
+          const fileUrl = join(replacement, url.replace(find, ''))
+          const outputDir = handleCSS(fileUrl)
+          return `export default "${convertPath(outputDir)}";`
+        }
+      } else if (find instanceof RegExp) {
+        // 使用 test 方法处理正则表达式类型
+        if (find.test(url)) {
+          const fileUrl = join(replacement, url.replace(find, ''))
+          const outputDir = handleCSS(fileUrl)
+          return `export default "${convertPath(outputDir)}";`
+        }
       }
     }
   }
+
   return null
 }
 
@@ -140,7 +143,7 @@ export type ESBuildAsstesOptions = {
  *
  * @param param0
  */
-export const esBuildAsstes = (optoins: ESBuildAsstesOptions = {}): Plugin => {
+export const esBuildAsstes = (optoins?: ESBuildAsstesOptions): Plugin => {
   // 默认配置
   const filter = optoins?.filter ?? assetsReg
   const namespace = 'assets'
@@ -189,7 +192,7 @@ export type ESBuildCSSOptions = {
  * @param param0
  * @returns
  */
-export const esBuildCSS = (optoins: ESBuildCSSOptions = {}): Plugin => {
+export const esBuildCSS = (optoins?: ESBuildCSSOptions): Plugin => {
   const filter = optoins?.filter || cssReg
   const namespace = optoins?.namespace || 'css'
   // 返回插件

@@ -6,9 +6,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 export default defineConfig({
   plugins: [
-    {
-      name: 'jsxp',
-      useApp: () => process.argv.includes('--view') && useJSXP()
+    () => {
+      if (process.argv.includes('--view')) return () => useJSXP()
     }
   ],
   build: {
