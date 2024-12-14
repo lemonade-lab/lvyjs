@@ -1,7 +1,8 @@
-import { dirname, join, relative, resolve } from 'path'
+import { basename, join, resolve } from 'path'
 import { spawn } from 'child_process'
 import { type Plugin } from 'esbuild'
-import crypto from 'node:crypto'
+// import crypto from 'node:crypto'
+import tmp from 'tmp'
 import { Alias } from '@rollup/plugin-alias'
 import { assetsReg, cssReg } from './config'
 
@@ -23,6 +24,44 @@ const startCssPost = (input: string, output: string) => {
   process.on('exit', () => {
     cssPostProcess.kill()
   })
+}
+
+/**
+ *
+ * @param alias
+ * @returns
+ */
+export const esBuildAlias = (alias?: { entries?: Alias[] }): Plugin => {
+  const entries = alias?.entries
+  return {
+    name: 'alias',
+    setup(build) {
+      // 解析路径时使用 entries
+      if (entries) {
+        build.onResolve({ filter: /.*/ }, args => {
+          const url = args.path
+          for (const { find, replacement } of entries!) {
+            if (typeof find === 'string' && url.startsWith(find)) {
+              // 字符串匹配
+              const resolvedPath = join(replacement, url.slice(find.length))
+              const absolutePath = resolve(resolvedPath)
+              return {
+                path: absolutePath
+              }
+            } else if (find instanceof RegExp && find.test(url)) {
+              // 正则匹配
+              const resolvedPath = url.replace(find, replacement)
+              const absolutePath = resolve(resolvedPath)
+              return {
+                path: absolutePath
+              }
+            }
+          }
+          return null
+        })
+      }
+    }
+  }
 }
 
 /**
@@ -54,85 +93,19 @@ const generateModuleContent = (relativePath: string) => {
 
 const chache = {}
 
-const getHash = (str: string) => {
-  // 使用 MD5 算法创建哈希对象
-  const hash = crypto.createHash('md5')
-  // 更新哈希对象内容
-  hash.update(str)
-  return hash.digest('hex')
-}
-
-let entries: Alias[] | null = null
-
-export const esBuildAlias = (alias?: { entries?: Alias[] }) => {
-  if (!entries) {
-    entries = alias?.entries ?? []
-  }
-}
-
-const handleAsstesFile = (url: string) => {
-  if (entries) {
-    for (const { find, replacement } of entries) {
-      if (typeof find === 'string') {
-        // 使用 startsWith 处理字符串类型
-        if (url.startsWith(find)) {
-          const fileUrl = join(replacement, url.replace(find, ''))
-          return `export default "${convertPath(fileUrl)}";`
-        }
-      } else if (find instanceof RegExp) {
-        // 使用 test 方法处理正则表达式类型
-        if (find.test(url)) {
-          const fileUrl = join(replacement, url.replace(find, ''))
-          return `export default "${convertPath(fileUrl)}";`
-        }
-      }
-    }
-  }
-  return null
-}
-
 /**
  *
  * @param fileUrl
  * @returns
  */
 const handleCSS = (fileUrl: string) => {
-  const hash = getHash(fileUrl)
-  const outputDir = join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${hash}.css`)
+  const tmpDirPath = tmp.dirSync({ unsafeCleanup: true }).name
+  const outputDir = resolve(tmpDirPath, basename(fileUrl))
   if (!chache[fileUrl]) {
     startCssPost(fileUrl, outputDir)
     chache[fileUrl] = true
   }
   return outputDir
-}
-
-/**
- * 处理路径别名的加载
- * @param {string} url URL
- * @returns {string|null} 加载结果
- */
-const handleCSSPath = (url: string) => {
-  if (entries) {
-    for (const { find, replacement } of entries) {
-      if (typeof find === 'string') {
-        // 使用 startsWith 处理字符串类型
-        if (url.startsWith(find)) {
-          const fileUrl = join(replacement, url.replace(find, ''))
-          const outputDir = handleCSS(fileUrl)
-          return `export default "${convertPath(outputDir)}";`
-        }
-      } else if (find instanceof RegExp) {
-        // 使用 test 方法处理正则表达式类型
-        if (find.test(url)) {
-          const fileUrl = join(replacement, url.replace(find, ''))
-          const outputDir = handleCSS(fileUrl)
-          return `export default "${convertPath(outputDir)}";`
-        }
-      }
-    }
-  }
-
-  return null
 }
 
 export type ESBuildAsstesOptions = {
@@ -146,35 +119,14 @@ export type ESBuildAsstesOptions = {
 export const esBuildAsstes = (optoins?: ESBuildAsstesOptions): Plugin => {
   // 默认配置
   const filter = optoins?.filter ?? assetsReg
-  const namespace = 'assets'
   // 返回插件
   return {
-    name: 'assets-loader',
+    name: 'assets',
     setup(build) {
-      const outputDirs = new Map()
-      // 过滤图片文件
-      build.onResolve({ filter }, args => {
-        const dir = resolve(args.resolveDir, args.path)
-        outputDirs.set(dir, args.importer)
+      build.onLoad({ filter }, async args => {
+        const content = generateModuleContent(args.path)
         return {
-          path: dir,
-          namespace
-        }
-      })
-      build.onLoad({ filter, namespace }, async args => {
-        if (!outputDirs.has(args.path)) return null
-        const outputDir = outputDirs.get(args.path)
-        const relativePath = relative(dirname(outputDir), args.path)
-        // 不管是别名资源。都只是需要返回一个路径
-        const aliasResult = handleAsstesFile(relativePath)
-        if (aliasResult) {
-          return {
-            contents: aliasResult,
-            loader: 'js'
-          }
-        }
-        return {
-          contents: generateModuleContent(relativePath),
+          contents: content,
           loader: 'js'
         }
       })
@@ -184,7 +136,7 @@ export const esBuildAsstes = (optoins?: ESBuildAsstesOptions): Plugin => {
 
 export type ESBuildCSSOptions = {
   filter?: RegExp
-  namespace?: string
+  configPath?: string
 }
 
 /**
@@ -194,38 +146,17 @@ export type ESBuildCSSOptions = {
  */
 export const esBuildCSS = (optoins?: ESBuildCSSOptions): Plugin => {
   const filter = optoins?.filter || cssReg
-  const namespace = optoins?.namespace || 'css'
   // 返回插件
   return {
     name: 'css-loader',
     setup(build) {
-      const outputDirs = new Map()
-      // 过滤 CSS/SCSS 文件
-      build.onResolve({ filter }, args => {
-        const dir = resolve(args.resolveDir, args.path)
-        outputDirs.set(dir, args.importer)
-        return {
-          path: dir,
-          namespace
-        }
-      })
       // 加载 CSS/SCSS 文件
-      build.onLoad({ filter, namespace }, async args => {
-        if (!outputDirs.has(args.path)) return null
-        const outputDir = outputDirs.get(args.path)
-        // 计算相对路径
-        const relativePath = relative(dirname(outputDir), args.path)
-        // 处理路径别名的加载
-        const aliasResult = handleCSSPath(relativePath)
-        if (aliasResult) {
-          return {
-            contents: aliasResult,
-            loader: 'js'
-          }
-        }
+      build.onLoad({ filter }, async args => {
         // 不是别名资源
+        const cssPath = convertPath(handleCSS(args.path))
+        const contents = `export default "${cssPath}";`
         return {
-          contents: `export default "${convertPath(handleCSS(args.path))}";`,
+          contents: contents,
           loader: 'js'
         }
       })

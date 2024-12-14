@@ -3,18 +3,16 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { onStart as useAlemonJS } from 'alemonjs'
 import { createServer as useJSXP } from 'jsxp'
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const includes = (value: string) => process.argv.includes(value)
 export default defineConfig({
   plugins: [
     () => {
-      if (process.argv.includes('--app')) return () => useAlemonJS()
-      if (process.argv.includes('--view')) return () => useJSXP()
+      if (includes('--app')) return () => useAlemonJS()
+      if (includes('--view')) return () => useJSXP()
     }
   ],
-  build: {
-    alias: {
-      entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
-    }
+  alias: {
+    entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   }
 })

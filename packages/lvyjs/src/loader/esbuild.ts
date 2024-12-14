@@ -8,11 +8,14 @@ const plugins: esbuild.Plugin[] = []
  *
  */
 const initPlugins = () => {
+  if (global.lvyConfig?.alias) {
+    plugins.push(esBuildAlias(global.lvyConfig.alias))
+  }
   if (global.lvyConfig?.assets) {
     plugins.push(esBuildAsstes(global.lvyConfig.assets))
   }
   if (typeof global.lvyConfig?.esbuild?.styles != 'boolean') {
-    plugins.push(esBuildCSS(global.lvyConfig.esbuild?.styles))
+    plugins.push(esBuildCSS(global.lvyConfig.esbuild?.styles ?? {}))
   }
 }
 
@@ -26,16 +29,12 @@ export const ESBuild = async (input: string) => {
   if (!global.lvyConfig) global.lvyConfig = {}
   if (!global.lvyConfig.esbuild) global.lvyConfig.esbuild = {}
 
-  // alias
-  if (global.lvyConfig.alias) esBuildAlias(global.lvyConfig.alias)
-
   // 没有插件时，检查是否有可用插件。
   if (plugins.length === 0) {
     // init plugisn
     await initPlugins()
   }
 
-  //
   const options = global.lvyConfig?.esBuildOptions || {}
 
   // 构建
@@ -50,11 +49,12 @@ export const ESBuild = async (input: string) => {
     format: 'esm',
     // 不写入文件
     write: false,
-    plugins,
+    plugins: [...plugins],
     // 忽略所有外部依赖
     external: ['*'],
     ...options
   })
+
   if (!result.outputFiles) {
     return ''
   }

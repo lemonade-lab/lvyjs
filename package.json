@@ -16,8 +16,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "lvyjs": "file:packages/lvyjs",
-    "jsxp": "file:packages/jsxp"
+    "jsxp": "file:packages/jsxp",
+    "lvyjs": "file:packages/lvyjs"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.25.7",
