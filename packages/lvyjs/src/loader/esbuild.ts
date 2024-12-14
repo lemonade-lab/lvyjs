@@ -49,9 +49,9 @@ export const ESBuild = async (input: string) => {
     format: 'esm',
     // 不写入文件
     write: false,
-    plugins: [...plugins],
     // 忽略所有外部依赖
     external: ['*'],
+    plugins: [...plugins],
     ...options
   })
 

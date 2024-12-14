@@ -1,30 +1,9 @@
-import { basename, join, resolve } from 'path'
-import { spawn } from 'child_process'
+import { join, resolve } from 'path'
 import { type Plugin } from 'esbuild'
-// import crypto from 'node:crypto'
-import tmp from 'tmp'
+import crypto from 'node:crypto'
 import { Alias } from '@rollup/plugin-alias'
 import { assetsReg, cssReg } from './config'
-
-/**
- *
- * @param input
- * @param output
- */
-const startCssPost = (input: string, output: string) => {
-  const run = ['postcss', input, '-o', output, '--watch']
-  // 启动 Tailwind 进程
-  const cssPostProcess = spawn('npx', run, {
-    stdio: 'inherit',
-    shell: process.platform === 'win32'
-  })
-  cssPostProcess.on('error', err => {
-    console.error('Failed to start Tailwind process:', err)
-  })
-  process.on('exit', () => {
-    cssPostProcess.kill()
-  })
-}
+import { postCSS } from './postcss'
 
 /**
  *
@@ -91,21 +70,30 @@ const generateModuleContent = (relativePath: string) => {
   return contents
 }
 
-const chache = {}
+const getRandomName = (str: string) => {
+  // 使用 MD5 算法创建哈希对象
+  const hash = crypto.createHash('md5')
+  // 更新哈希对象内容
+  hash.update(str)
+  return hash.digest('hex')
+}
 
+const chache = {}
 /**
  *
  * @param fileUrl
  * @returns
  */
-const handleCSS = (fileUrl: string) => {
-  const tmpDirPath = tmp.dirSync({ unsafeCleanup: true }).name
-  const outputDir = resolve(tmpDirPath, basename(fileUrl))
-  if (!chache[fileUrl]) {
-    startCssPost(fileUrl, outputDir)
-    chache[fileUrl] = true
+const generateCSSModuleContent = (pathURL: string) => {
+  const fileName = getRandomName(pathURL)
+  const outputFileURL = convertPath(
+    join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${fileName}.css`)
+  )
+  if (!chache[pathURL]) {
+    postCSS(convertPath(pathURL), outputFileURL)
+    chache[pathURL] = true
   }
-  return outputDir
+  return `export default "${outputFileURL}";`
 }
 
 export type ESBuildAsstesOptions = {
@@ -123,7 +111,7 @@ export const esBuildAsstes = (optoins?: ESBuildAsstesOptions): Plugin => {
   return {
     name: 'assets',
     setup(build) {
-      build.onLoad({ filter }, async args => {
+      build.onLoad({ filter }, args => {
         const content = generateModuleContent(args.path)
         return {
           contents: content,
@@ -151,10 +139,8 @@ export const esBuildCSS = (optoins?: ESBuildCSSOptions): Plugin => {
     name: 'css-loader',
     setup(build) {
       // 加载 CSS/SCSS 文件
-      build.onLoad({ filter }, async args => {
-        // 不是别名资源
-        const cssPath = convertPath(handleCSS(args.path))
-        const contents = `export default "${cssPath}";`
+      build.onLoad({ filter }, args => {
+        const contents = generateCSSModuleContent(args.path)
         return {
           contents: contents,
           loader: 'js'
