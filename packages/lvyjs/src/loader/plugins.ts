@@ -90,6 +90,7 @@ const generateCSSModuleContent = (pathURL: string) => {
     join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${fileName}.css`)
   )
   if (!chache[pathURL]) {
+    console.log('postCSS')
     postCSS(convertPath(pathURL), outputFileURL)
     chache[pathURL] = true
   }

@@ -1,4 +1,4 @@
-import { defineConfig } from 'lvyjs'
+import { defineConfig } from './packages/lvyjs/lib/loader/store'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)

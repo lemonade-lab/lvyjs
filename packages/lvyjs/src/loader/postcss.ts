@@ -1,109 +1,90 @@
 import fs from 'fs'
 import postcss from 'postcss'
 import { createRequire } from 'module'
-import { dirname, join } from 'path'
-import chokidar from 'chokidar'
+import { join, dirname } from 'path'
 
 const require = createRequire(import.meta.url)
 
-// 加载 postcss 配置文件
-const loadPostcssConfig = configPath => {
+const loadPostcssConfig = (configPath: string) => {
   try {
     if (fs.existsSync(configPath)) {
       const cfg = require(configPath)
+
       if (!Array.isArray(cfg.plugins)) {
         const keys = Object.keys(cfg.plugins)
         const plugins = keys
           .map(key => {
             try {
               const pluginConfig = cfg.plugins[key]
-              const plugin = require(key) // 动态加载插件
+              const plugin = require(key)
               if (typeof plugin === 'function') {
                 return plugin(pluginConfig)
               } else {
-                throw new Error(`Plugin ${key} is not a valid PostCSS plugin function.`)
+                throw new Error(`插件 ${key} 不是有效的 PostCSS 插件函数`)
               }
             } catch (err) {
-              console.error(`Failed to load PostCSS plugin ${key}:`, err)
-              return null // 返回 null 以便过滤无效插件
+              console.error(`加载 PostCSS 插件 ${key} 失败:`, err)
+              return null
             }
           })
-          .filter(Boolean) // 过滤掉无效插件
-
+          .filter(Boolean)
         return { plugins }
       }
-      return cfg // 如果 plugins 是数组，则直接返回
+      return cfg
     } else {
-      throw new Error(`PostCSS config file not found at ${configPath}`)
+      throw new Error(`未找到 PostCSS 配置文件: ${configPath}`)
     }
   } catch (err) {
-    console.error('Failed to load PostCSS config:', err)
-    return { plugins: [] } // 默认插件
+    console.error('加载 PostCSS 配置失败:', err)
+    return { plugins: [] }
   }
 }
 
-export const postCSS = (inputPath, outputPath) => {
+const postCSS = (inputPath: string, outputPath: string) => {
   const configPath = join(process.cwd(), 'postcss.config.cjs')
-
-  // 加载 PostCSS 配置
   const postcssConfig = loadPostcssConfig(configPath)
 
-  // 定义处理 CSS 的函数
-  const processCSS = async css => {
-    try {
-      const result = await postcss(postcssConfig.plugins) // 使用配置中的插件
-        .process(css, { from: inputPath, to: outputPath })
-
-      // 写入输出 CSS 文件
-      fs.writeFileSync(outputPath, result.css)
-      console.log(`Output written to ${outputPath}`)
-
-      // 如果有 warnings，输出警告信息
-      if (result.warnings().length) {
-        result.warnings().forEach(warn => {
-          console.warn(warn.toString())
-        })
-      }
-
-      // 返回依赖文件
-      return result.messages.filter(msg => msg.type === 'dependency').map(msg => msg.file)
-    } catch (error) {
-      console.error(`PostCSS process error: ${error}`)
-      return []
-    }
-  }
-
-  // 读取输入 CSS 文件并处理
   const readAndProcessCSS = async () => {
-    try {
-      const css = await fs.promises.readFile(inputPath)
-      fs.mkdirSync(dirname(outputPath), { recursive: true })
-      const dependencies = await processCSS(css)
+    const css = fs.readFileSync(inputPath, 'utf-8')
+    fs.mkdirSync(dirname(outputPath), { recursive: true })
+    const result = await postcss(postcssConfig.plugins).process(css, {
+      from: inputPath,
+      to: outputPath
+    })
+    fs.writeFileSync(outputPath, result.css)
+    console.log(`输出文件已写入: ${outputPath}`)
 
-      // 监控依赖文件变化
-      dependencies.forEach(dep => {
-        chokidar.watch(dep).on('change', path => {
-          console.log(`Dependency file ${path} has been changed. Reprocessing...`)
-          readAndProcessCSS()
-        })
+    if (result.warnings().length) {
+      result.warnings().forEach(warn => {
+        console.warn(warn.toString())
       })
-    } catch (err) {
-      console.error(`Error reading input file: ${err}`)
+    }
+
+    const dependencies = result.messages
+      .filter(msg => msg.type === 'dependency')
+      .map(msg => msg.file)
+
+    for (const dep of dependencies) {
+      console.log(`开始监听依赖文件: ${dep}`)
+      fs.watch(dep, eventType => {
+        if (eventType === 'change') {
+          console.log(`依赖文件 ${dep} 已更改，重新处理...`)
+          readAndProcessCSS()
+        }
+      })
     }
   }
 
-  // 初始处理
   readAndProcessCSS()
 
-  // 监控输入文件变化
-  chokidar.watch(inputPath).on('change', path => {
-    console.log(`File ${path} has been changed. Reprocessing...`)
-    readAndProcessCSS()
+  console.log(`开始监听输入文件: ${inputPath}`)
+
+  fs.watch(inputPath, eventType => {
+    if (eventType === 'change') {
+      console.log(`输入文件 ${inputPath} 已更改，重新处理...`)
+      readAndProcessCSS()
+    }
   })
 }
 
-// 输入和输出路径
-const inputPath = `C:\\Users\\PYY\\Desktop\\core\\src\\assets\\test.css`
-const outputPath = `C:\\Users\\PYY\\Desktop\\core\\node_modules\\lvyjs\\assets\\b796f92dea6451b197a964e7abcacc23.css`
-
-postCSS(inputPath, outputPath)
+export { postCSS }

@@ -6,3 +6,4 @@ console.log('json', json)
 console.log('png', png)
 console.log('css', css)
 console.log('Hello World')
+import './tes.js'
