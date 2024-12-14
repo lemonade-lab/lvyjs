@@ -1,5 +1,7 @@
 import esbuild from 'esbuild'
-import { esBuildAlias, esBuildAsstes, esBuildCSS } from './plugins'
+import { esBuildCSS } from './plugins/css'
+import { esBuildAlias } from './plugins/alias'
+import { esBuildAsstes } from './plugins/Asstes'
 
 // 插件
 const plugins: esbuild.Plugin[] = []
@@ -8,14 +10,14 @@ const plugins: esbuild.Plugin[] = []
  *
  */
 const initPlugins = () => {
-  if (global.lvyConfig?.alias) {
+  if (typeof global.lvyConfig?.alias != 'boolean') {
     plugins.push(esBuildAlias(global.lvyConfig.alias))
   }
-  if (global.lvyConfig?.assets) {
+  if (typeof global.lvyConfig?.assets != 'boolean') {
     plugins.push(esBuildAsstes(global.lvyConfig.assets))
   }
-  if (typeof global.lvyConfig?.esbuild?.styles != 'boolean') {
-    plugins.push(esBuildCSS(global.lvyConfig.esbuild?.styles ?? {}))
+  if (typeof global.lvyConfig?.styles != 'boolean') {
+    plugins.push(esBuildCSS(global.lvyConfig?.styles ?? {}))
   }
 }
 
@@ -35,7 +37,8 @@ export const ESBuild = async (input: string) => {
     await initPlugins()
   }
 
-  const options = global.lvyConfig?.esBuildOptions || {}
+  const options = global.lvyConfig?.esbuild?.options ?? {}
+  const pl = options?.plugins ?? []
 
   // 构建
   const result = await esbuild.build({
@@ -51,8 +54,8 @@ export const ESBuild = async (input: string) => {
     write: false,
     // 忽略所有外部依赖
     external: ['*'],
-    plugins: [...plugins],
-    ...options
+    ...options,
+    plugins: [...plugins, ...pl]
   })
 
   if (!result.outputFiles) {

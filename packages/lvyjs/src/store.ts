@@ -1,15 +1,14 @@
-import { Alias } from '@rollup/plugin-alias'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import { RollupStylesCSSImportOptions } from '../plugins/loader-css'
 import { RollupCommonJSOptions } from '@rollup/plugin-commonjs'
-import { RollupJsonOptions } from '@rollup/plugin-json'
 import { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import { SameShape, BuildOptions } from 'esbuild'
-import { ESBuildCSSOptions } from './plugins'
-import { RollupBuild } from 'rollup'
+import { OutputOptions, RollupOptions } from 'rollup'
 
-type RollupBuildOptions = Parameters<RollupBuild['write']>['0']
+interface Alias {
+  find: string | RegExp
+  replacement: string
+}
 
 export type Options = {
   /**
@@ -19,70 +18,68 @@ export type Options = {
   /**
    * 别名
    */
-  alias?: {
-    /**
-     * 别名规则
-     */
-    entries?: Alias[]
-  }
+  alias?:
+    | {
+        /**
+         * 别名规则
+         */
+        entries?: Alias[]
+      }
+    | false
   /**
    * 静态资源识别
    */
-  assets?: {
-    /**
-     * 过滤得到指定格式的文件识别之为静态资源
-     */
-    filter?: RegExp
-  }
-  /**
-   *
-   */
-  esBuildOptions?: SameShape<BuildOptions, BuildOptions>
+  assets?:
+    | {
+        /**
+         * 过滤得到指定格式的文件识别之为静态资源
+         */
+        filter?: RegExp
+      }
+    | false
+  styles?:
+    | {
+        /**
+         * 过滤得到指定格式的文件识别之为静态资源
+         */
+        filter?: RegExp
+      }
+    | false
   /**
    * 运行时配置
    */
   esbuild?: {
-    [key: string]: any
     /**
-     * 样式处理
+     *
      */
-    styles?: ESBuildCSSOptions | false
+    options?: SameShape<BuildOptions, BuildOptions>
   }
-  /**
-   * ⚠️ RollupBuild['write'] 配置
-   */
-  rollupOptions?: RollupBuildOptions & {
-    /**
-     * 默认 src
-     */
-    input?: string
-  }
-  /**
-   *使用插件
-   */
-  rollupPlugins?: any[]
   /**
    * 打包时配置
    */
   build?:
     | {
-        [key: string]: any
-        /**
-         * 样式处理配置
-         */
-        styles?: RollupStylesCSSImportOptions | false
         /**
          * cjs文件处理
          */
         commonjs?: RollupCommonJSOptions | false
         /**
-         * josn文件处理
-         */
-        json?: RollupJsonOptions | false
-        /**
          * ts配置
          */
         typescript?: RollupTypescriptOptions | false
+        /**
+         *
+         */
+        RollupOptions?: RollupOptions
+        /**
+         *
+         */
+        OutputOptions?: OutputOptions & {
+          /**
+           * 默认 src
+           */
+          input?: string
+        }
       }
     | false
 }

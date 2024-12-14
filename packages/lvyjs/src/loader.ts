@@ -1,32 +1,23 @@
-import { ESBuild } from './loader/esbuild'
-
-import { initConfig } from './loader/store'
-await initConfig()
-
-type LoaderResult = {
-  format?: string // 例如，模块格式
-  source?: string // 模块源码
-  shortCircuit?: boolean
+import { ESBuild } from './esbuild/index.js'
+import { MessagePort } from 'worker_threads'
+declare global {
+  var lvyWorkerProt: MessagePort
 }
-
-const platform = ['linux', 'android', 'darwin']
-const T = platform.includes(process.platform)
-const reg = T ? /^file:\/\// : /^file:\/\/\//
+const platform = ['win32'].includes(process.platform)
+const reg = platform ? /^file:\/\/\// : /^file:\/\//
 const nodeReg = /(node_modules|node_|node:)/
 const jsReg = /\.(js|ts|jsx|tsx)$/
-
+export async function initialize({ port, lvyConfig }) {
+  global.lvyConfig = lvyConfig
+  global.lvyWorkerProt = port
+}
 /**
- *
  * @param url
  * @param context
  * @param defaultLoad
  * @returns
  */
-export const load = async (
-  url: string,
-  context: any,
-  defaultLoad: (url: string, context: any) => Promise<LoaderResult>
-) => {
+const load = async (url, context, defaultLoad) => {
   if (nodeReg.test(url)) {
     return defaultLoad(url, context)
   }
@@ -39,3 +30,4 @@ export const load = async (
     source: code
   })
 }
+export { load }

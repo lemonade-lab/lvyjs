@@ -4,9 +4,9 @@ import typescript from '@rollup/plugin-typescript'
 import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import styles from 'rollup-plugin-styles'
-import { getScriptFiles } from './get-files'
+import { getScriptFiles } from './utils/files'
 import alias from '@rollup/plugin-alias'
-import { rollupAssets, rollupStylesCSSImport } from '../plugins/index'
+import { rollupAssets, rollupStylesCSSImport } from './plugins/index'
 
 /**
  * 用于忽略警告
@@ -34,15 +34,34 @@ export const buildJS = async (inputs: string[]) => {
   // 插件
   const plugins: InputPluginOption = []
 
-  if (global.lvyConfig?.alias) {
-    plugins.push(alias(global.lvyConfig.alias))
+  if (typeof global.lvyConfig?.alias !== 'boolean') {
+    plugins.push(alias(global.lvyConfig?.alias ?? {}))
   }
 
-  if (global.lvyConfig.assets) {
-    plugins.push(rollupAssets(global.lvyConfig.assets))
-  } else {
-    plugins.push(rollupAssets())
+  if (typeof global.lvyConfig?.assets !== 'boolean') {
+    plugins.push(rollupAssets(global.lvyConfig?.assets ?? {}))
   }
+
+  if (typeof global.lvyConfig?.styles !== 'boolean') {
+    if (!global.lvyConfig.alias) global.lvyConfig.alias = {}
+    const newAlias = val => {
+      const alias = {}
+      // 遍历 entries 数组
+      val.entries.forEach(entry => {
+        alias[entry.find] = entry.replacement
+      })
+      return alias
+    }
+    plugins.push(
+      styles({
+        alias: newAlias(global.lvyConfig?.alias),
+        mode: ['inject', () => '']
+      })
+    )
+    plugins.push(rollupStylesCSSImport(global.lvyConfig.styles))
+  }
+
+  plugins.push(json())
 
   if (typeof global.lvyConfig.build != 'boolean') {
     //
@@ -50,33 +69,19 @@ export const buildJS = async (inputs: string[]) => {
       if (typeof global.lvyConfig.build[key] == 'boolean') {
         continue
       }
-      if (key === 'styles') {
-        plugins.push(
-          styles({
-            mode: ['inject', () => '']
-          })
-        )
-        plugins.push(rollupStylesCSSImport(global.lvyConfig.build[key]))
-      } else if (key === 'commonjs' && !global.lvyConfig.build['@rollup/plugin-commonjs']) {
+      if (key == 'commonjs' && !global.lvyConfig.build['@rollup/plugin-commonjs']) {
         plugins.push(commonjs(global.lvyConfig.build[key]))
-      } else if (key === 'json' && !global.lvyConfig.build['@rollup/plugin-json']) {
-        plugins.push(json(global.lvyConfig.build[key]))
-      } else if (key === 'typescript' && !global.lvyConfig.build['@rollup/plugin-typescript']) {
+      } else if (key == 'typescript' && !global.lvyConfig.build['@rollup/plugin-typescript']) {
         plugins.push(typescript(global.lvyConfig.build[key]))
-      } else if (key === 'plugins') {
-        if (Array.isArray(global.lvyConfig.build[key])) {
-          for (const plugin of global.lvyConfig.build[key]) {
-            plugins.push(plugin)
-          }
-        }
-      } else {
-        const plugin = (await import(key)).default
-        plugins.push(plugin(global.lvyConfig.build[key]))
+      } else if (key == 'OutputOptions') {
+        continue
+      } else if (key == 'RollupOptions') {
+        continue
       }
     }
 
     // 如果不存在这些配置
-    const keys = ['styles', 'commonjs', 'json', 'typescript']
+    const keys = ['commonjs', 'typescript']
 
     for (const key of keys) {
       // 如果是布尔值
@@ -88,32 +93,23 @@ export const buildJS = async (inputs: string[]) => {
         continue
       }
       //
-      if (key == 'styles') {
-        plugins.push(
-          styles({
-            mode: ['inject', () => '']
-          })
-        )
-        plugins.push(rollupStylesCSSImport())
-      } else if (key === 'commonjs') {
+      if (key === 'commonjs') {
         plugins.push(commonjs())
-      } else if (key === 'json') {
-        plugins.push(json())
       } else if (key === 'typescript') {
         plugins.push(typescript())
       }
     }
   }
 
-  // rollup 配置
-  const rollupOptions = global.lvyConfig?.rollupOptions ?? {}
-  const rollupPlugins = global.lvyConfig?.rollupPlugins ?? []
+  const RollupOptions = global.lvyConfig?.build?.RollupOptions ?? {}
+  const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
 
   // build
   const bundle = await rollup({
     input: inputs,
-    plugins: [...plugins, ...rollupPlugins],
-    onwarn: onwarn
+    plugins: [...plugins],
+    onwarn: onwarn,
+    ...RollupOptions
   })
 
   // 写入输出文件
@@ -123,7 +119,7 @@ export const buildJS = async (inputs: string[]) => {
     sourcemap: false,
     preserveModules: true,
     assetFileNames: 'assets/[name]-[hash][extname]',
-    ...rollupOptions
+    ...OutputOptions
   })
 }
 
@@ -132,12 +128,10 @@ export const buildJS = async (inputs: string[]) => {
  * @param script
  */
 export async function buildAndRun() {
+  if (!global.lvyConfig) global.lvyConfig = {}
+  if (!global.lvyConfig.build) global.lvyConfig.build = {}
   // rollup 配置
-  let inputDir = 'src'
-  if (global.lvyConfig?.rollupOptions?.input) {
-    inputDir = global.lvyConfig.rollupOptions.input
-    delete global.lvyConfig.rollupOptions['input']
-  }
+  let inputDir = global.lvyConfig?.build?.OutputOptions?.input ?? 'src'
   const inputFiles = getScriptFiles(join(process.cwd(), inputDir))
   await buildJS(inputFiles)
 }

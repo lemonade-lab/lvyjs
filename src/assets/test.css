@@ -1,8 +1,7 @@
-@import url('./aa.css');
+@import url('@src/assets/test2.css');
 
 body {
   margin: 0;
   padding: 0;
   position: absolute;
-  display: flex;
 }

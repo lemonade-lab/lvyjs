@@ -42,23 +42,52 @@ import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const server = () => import('./src/index')
+const jsxp = () => import('jsxp').then(res => res.createServer())
 export default defineConfig({
-  plugins: [
-    // loader
-    () => server
-  ],
+  plugins: [() => server, () => jsxp],
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   },
   assets: {
     filter: /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
   },
-  rollupOptions: {
-    intro: `/**  https://lvyjs.dev script start **/`,
-    outro: ` /**  https://lvyjs.dev script end  **/ `,
-    assetFileNames: 'assets/[name]-[hash][extname]'
+  // styles: {
+  //   filter: /\.(less|sass|scss|css)$/
+  // },
+  build: {
+    OutputOptions: {
+      intro: `/**  https://lvyjs.dev script start **/`,
+      outro: ` /**  https://lvyjs.dev script end  **/ `
+    }
   }
 })
+```
+
+- postcss.config.cjs
+
+> 如果使用 lvyjsOptions.styles 的话可配置
+
+```cjs
+module.exports = {
+  plugins: {
+    // 允许使用import导入css文件
+    'postcss-import': {},
+    // 允许使用嵌套语法
+    'postcss-simple-vars': {},
+    // nested
+    'postcss-nested': {},
+    // 增加浏览器前缀
+    'autoprefixer': {},
+    // 内联url资源
+    'postcss-url': {
+      url: 'inline'
+    },
+    // 压缩css
+    'cssnano': {
+      preset: 'default'
+    }
+  }
+}
 ```
 
 ```sh

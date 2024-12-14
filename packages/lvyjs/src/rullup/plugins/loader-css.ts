@@ -3,14 +3,14 @@ import { basename, dirname, resolve } from 'node:path'
 import { type InputPluginOption } from 'rollup'
 import { cssReg } from './config'
 
-export type RollupStylesCSSImportOptions = { include?: RegExp }
+export type RollupStylesCSSImportOptions = { filter?: RegExp }
 
 /**
  *
  * @returns
  */
 export const rollupStylesCSSImport = (options?: RollupStylesCSSImportOptions) => {
-  const { include = cssReg } = options ?? {}
+  const include = options?.filter ?? cssReg
   const filter = createFilter(include, null)
   return {
     name: 'c-css',
