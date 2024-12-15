@@ -1,0 +1,54 @@
+// @import url('@src/assets/test1.css');
+// @import 'src/assets/test2.less';
+// @import url('./test2.less');
+// @import './test1.css';
+
+// 变量
+@primary-color: #3498db;
+@padding: 10px;
+
+// 混合
+.mixin-button-styles() {
+  padding: @padding;
+  border-radius: 5px;
+  color: white;
+}
+
+// 使用混合
+.button {
+  .mixin-button-styles();
+  background-color: @primary-color;
+
+  &:hover {
+    background-color: darken(@primary-color, 10%);
+  }
+}
+
+// 嵌套
+.nav {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: inline-block;
+
+      a {
+        text-decoration: none;
+        color: @primary-color;
+      }
+    }
+  }
+}
+
+// 循环
+.loop(@i) when (@i > 0) {
+  .item-@{i} {
+    width: 100px * @i;
+  }
+  .loop(@i - 1);
+}
+
+// 调用循环
+.loop(3);

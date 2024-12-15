@@ -1,10 +1,15 @@
 import json from '@src/assets/test.json'
 // tudo bug
-import png from '@src/assets/test.png'
-import css from '@src/assets/test.css'
+import cssURL from '@src/assets/test.css'
+import lesscssURL from '@src/assets/test.less'
+import scssURL from '@src/assets/test.scss'
+import sassURL from '@src/assets/test.sass'
 console.log('json', json)
-console.log('png', png)
-console.log('css', css)
+console.log('css', cssURL)
+console.log('lesscss', lesscssURL)
+console.log('scss', scssURL)
+console.log('sass', sassURL)
 console.log('Hello World')
-import './tes.js'
-import './test.js'
+import '@src/tes'
+import '@src/test'
+import '@src/abc/index'

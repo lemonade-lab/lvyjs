@@ -42,18 +42,11 @@ import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const server = () => import('./src/index')
-const jsxp = () => import('jsxp').then(res => res.createServer())
 export default defineConfig({
-  plugins: [() => server, () => jsxp],
+  plugins: [() => server],
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   },
-  assets: {
-    filter: /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-  },
-  // styles: {
-  //   filter: /\.(less|sass|scss|css)$/
-  // },
   build: {
     OutputOptions: {
       intro: `/**  https://lvyjs.dev script start **/`,
@@ -61,33 +54,6 @@ export default defineConfig({
     }
   }
 })
-```
-
-- postcss.config.cjs
-
-> 如果使用 lvyjsOptions.styles 的话可配置
-
-```cjs
-module.exports = {
-  plugins: {
-    // 允许使用import导入css文件
-    'postcss-import': {},
-    // 允许使用嵌套语法
-    'postcss-simple-vars': {},
-    // nested
-    'postcss-nested': {},
-    // 增加浏览器前缀
-    'autoprefixer': {},
-    // 内联url资源
-    'postcss-url': {
-      url: 'inline'
-    },
-    // 压缩css
-    'cssnano': {
-      preset: 'default'
-    }
-  }
-}
 ```
 
 ```sh
@@ -122,6 +88,93 @@ const data = readFileSync(img_logo, 'utf-8')
 
 ```sh
 npx lvy build
+```
+
+## tyles
+
+> src/index.ts
+
+```ts
+import { readFileSync } from 'fs'
+// 得到该文件的绝对路径，类型 string
+import ccsURL from '@src/asstes/img/logo.css'
+// 完整的单文件css数据、即使内部有其他文件引用。
+const data = readFileSync(css, 'utf-8')
+```
+
+> 内置了对 css 的处理。
+
+> 如果你要处理 less 、sass、scss
+
+```sh
+yarn add less sass -D
+```
+
+### 引用
+
+- css
+
+```css
+@import url('@src/assets/test2.css');
+@import url('./test2.css');
+/* 支持别名 */
+```
+
+- scss
+
+```scss
+@import url('@src/assets/test3.scss');
+@import url('./test3.scss');
+@use './test3.scss';
+```
+
+以下写法待修复
+
+```scss
+@use '@src/assets/test2.scss';
+```
+
+- sass
+
+```sass
+// none
+```
+
+- less
+
+```less
+@import './test1.css';
+```
+
+以下写法待修复
+
+```less
+@import url('@src/assets/test2.less');
+@import url('./test2.less');
+@import '@src/assets/test2.less';
+@import './test2.less';
+//
+@import 'src/assets/test2.less';
+```
+
+### postcss
+
+> 使用 css 压缩
+
+```sh
+yarn add cssnano -D
+```
+
+- postcss.config.cjs
+
+```cjs
+module.exports = {
+  plugins: {
+    cssnano: {
+      preset: 'default'
+    }
+  }
+}
 ```
 
 ## Community

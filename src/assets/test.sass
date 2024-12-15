@@ -1,0 +1,46 @@
+/* This CSS will print because %message-shared is extended. */
+%message-shared
+    border: 1px solid #ccc
+    padding: 10px
+    color: #333
+
+// This CSS won't print because %equal-heights is never extended.
+%equal-heights
+    display: flex
+    flex-wrap: wrap
+
+.message
+    @extend %message-shared
+
+.success
+    @extend %message-shared
+    border-color: green
+
+.error
+    @extend %message-shared
+    border-color: red
+
+.warning
+    @extend %message-shared
+    border-color: yellow
+
+    // 定义主题颜色
+$DarkGray: #A9A9A9 // 深灰色
+$DarkRed: #8B0000 // 深红色
+$DarkGreen: #006400 // 深绿色
+
+// 混合宏定义
+@mixin theme($theme: $DarkGray)
+    background: $theme
+    box-shadow: 0 0 1px rgba($theme, 0.25)
+    color: #fff
+
+// 使用混合宏
+.info
+    @include theme // 使用默认主题（DarkGray）
+
+.alert
+    @include theme($DarkRed) // 使用深红色主题
+
+.success
+    @include theme($DarkGreen) // 使用深绿色主题

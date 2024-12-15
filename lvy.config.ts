@@ -4,9 +4,8 @@ import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const server = () => import('./src/index')
-const jsxp = () => import('jsxp').then(res => res.createServer())
 export default defineConfig({
-  plugins: [() => server, () => jsxp],
+  plugins: [() => server],
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   },

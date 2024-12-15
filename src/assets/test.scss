@@ -1,0 +1,54 @@
+// @import url('@src/assets/test2.css');
+// @import url('@src/assets/test3.scss');
+// @use './test3.scss';
+// @use '@src/assets/test2.scss';
+
+%message-shared {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+
+%equal-heights {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.message {
+  @extend %message-shared;
+}
+
+.success {
+  @extend %message-shared;
+  border-color: green;
+}
+
+.error {
+  @extend %message-shared;
+  border-color: red;
+}
+
+.warning {
+  @extend %message-shared;
+  border-color: yellow;
+}
+
+// 定义主题颜色
+$DarkGray: #a9a9a9; // 深灰色
+$DarkRed: #8b0000; // 深红色
+
+// 混合宏定义
+@mixin theme($theme: $DarkGray) {
+  background: $theme;
+  box-shadow: 0 0 1px rgba($theme, 0.25);
+  color: #fff;
+}
+
+// 使用混合宏
+.info {
+  @include theme; // 使用默认主题（DarkGray）
+}
+
+.alert {
+  @include theme($DarkRed); // 使用深红色主题
+}
