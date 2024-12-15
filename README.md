@@ -90,7 +90,7 @@ const data = readFileSync(img_logo, 'utf-8')
 npx lvy build
 ```
 
-## tyles
+## styles
 
 > src/index.ts
 
@@ -159,7 +159,7 @@ yarn add less sass -D
 
 ### postcss
 
-> 使用 css 压缩
+- 压缩
 
 ```sh
 yarn add cssnano -D
@@ -170,10 +170,34 @@ yarn add cssnano -D
 ```cjs
 module.exports = {
   plugins: {
+    tailwindcss: {},
     cssnano: {
       preset: 'default'
     }
   }
+}
+```
+
+- tailwindcss
+
+- postcss.config.cjs
+
+```cjs
+module.exports = {
+  plugins: {
+    tailwindcss: {}
+  }
+}
+```
+
+- tailwind.config.js
+
+```js
+/**
+ *  @type {import('tailwindcss').Config}
+ */
+export default {
+  content: ['./src/**/*.{js,jsx,ts,tsx}']
 }
 ```
 
