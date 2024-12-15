@@ -1,6 +1,6 @@
 import { type Plugin } from 'esbuild'
 import { generateCSSModuleContent } from '../utils/content'
-import { cssReg } from '../config'
+import { cssReg } from '../../config'
 
 export type ESBuildCSSOptions = {
   filter?: RegExp

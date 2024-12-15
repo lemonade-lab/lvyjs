@@ -1,7 +1,7 @@
 import { createFilter } from '@rollup/pluginutils'
 import { basename, dirname, resolve } from 'node:path'
 import { type InputPluginOption } from 'rollup'
-import { cssReg } from './config'
+import { cssReg } from '../../config'
 
 export type RollupStylesCSSImportOptions = { filter?: RegExp }
 

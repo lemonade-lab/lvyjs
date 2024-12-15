@@ -1,7 +1,7 @@
 import { dirname, basename, resolve } from 'path'
 import { readFileSync } from 'fs'
 import { type InputPluginOption } from 'rollup'
-import { assetsReg } from './config'
+import { assetsReg } from '../../config'
 export type RollupAssetsOptions = { filter?: RegExp }
 /**
  * @param {Object} options

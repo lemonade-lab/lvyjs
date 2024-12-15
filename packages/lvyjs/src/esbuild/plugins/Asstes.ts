@@ -1,5 +1,5 @@
 import { type Plugin } from 'esbuild'
-import { assetsReg } from '../config'
+import { assetsReg } from '../../config'
 import { generateModuleContent } from '../utils/content'
 
 export type ESBuildAsstesOptions = {
