@@ -15,8 +15,6 @@ port1.on('message', msg => {
       postCSS(from, to)
       cache[from] = true
     }
-  } else if (msg.type == 'JS_MODULE_GENERATED') {
-    // load 要对 指定目录下的文件，进行监听，并启动热加载。
   }
 })
 // port1.unref()

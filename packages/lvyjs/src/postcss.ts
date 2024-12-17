@@ -11,6 +11,12 @@ const config = {
   scss: null
 }
 
+/**
+ *
+ * @param configPath
+ * @param typing
+ * @returns
+ */
 const loadPostcssConfig = (configPath: string, typing: string) => {
   if (config[typing]) {
     return {
@@ -101,6 +107,12 @@ const loadPostcssConfig = (configPath: string, typing: string) => {
   }
 }
 
+/**
+ *
+ * @param inputPath
+ * @param outputPath
+ * @returns
+ */
 const postCSS = (inputPath: string, outputPath: string) => {
   const configPath = join(process.cwd(), 'postcss.config.cjs')
 
@@ -109,13 +121,10 @@ const postCSS = (inputPath: string, outputPath: string) => {
 
   if (/\.sass$/.test(inputPath)) {
     typing = 'sass'
-    // parser = require('postcss-sass')
   } else if (/\.less$/.test(inputPath)) {
     typing = 'less'
-    // parser = require('postcss-less')
   } else if (/\.scss$/.test(inputPath)) {
     typing = 'scss'
-    // parser = require('postcss-scss')
   }
 
   const postcssConfig = loadPostcssConfig(configPath, 'css')
@@ -123,7 +132,6 @@ const postCSS = (inputPath: string, outputPath: string) => {
 
   const readAndProcessCSS = async () => {
     let css = ''
-
     if (typing === 'less') {
       const less = require('less')
       const lessResult = await less.render(fs.readFileSync(inputPath, 'utf-8'))
@@ -135,26 +143,21 @@ const postCSS = (inputPath: string, outputPath: string) => {
     } else {
       css = fs.readFileSync(inputPath, 'utf-8')
     }
-
     fs.mkdirSync(dirname(outputPath), { recursive: true })
-
     const result = await postcss(postcssConfig.plugins).process(css, {
       parser: parser,
       from: inputPath,
       to: outputPath
     })
-
     fs.writeFileSync(outputPath, result.css)
     if (result.warnings().length) {
       result.warnings().forEach(warn => {
         console.warn(warn.toString())
       })
     }
-
     const dependencies = result.messages
       .filter(msg => msg.type === 'dependency')
       .map(msg => msg.file)
-
     for (const dep of dependencies) {
       fs.watch(dep, eventType => {
         if (eventType === 'change') {
@@ -163,7 +166,6 @@ const postCSS = (inputPath: string, outputPath: string) => {
       })
     }
   }
-
   readAndProcessCSS()
   fs.watch(inputPath, eventType => {
     if (eventType === 'change') {

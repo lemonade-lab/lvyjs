@@ -7,6 +7,7 @@ import styles from 'rollup-plugin-styles'
 import { getScriptFiles } from './utils/files'
 import alias from '@rollup/plugin-alias'
 import { rollupAssets, rollupStylesCSSImport } from './plugins/index'
+import { createAlias } from '../config'
 
 /**
  * 用于忽略警告
@@ -44,17 +45,9 @@ export const buildJS = async (inputs: string[]) => {
 
   if (typeof global.lvyConfig?.styles !== 'boolean') {
     if (!global.lvyConfig.alias) global.lvyConfig.alias = {}
-    const newAlias = val => {
-      const alias = {}
-      // 遍历 entries 数组
-      val.entries.forEach(entry => {
-        alias[entry.find] = entry.replacement
-      })
-      return alias
-    }
     plugins.push(
       styles({
-        alias: newAlias(global.lvyConfig?.alias),
+        alias: createAlias(global.lvyConfig?.alias),
         mode: ['inject', () => '']
       })
     )
@@ -102,15 +95,18 @@ export const buildJS = async (inputs: string[]) => {
   }
 
   const RollupOptions = global.lvyConfig?.build?.RollupOptions ?? {}
-  const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
+  const plg = await RollupOptions?.plugins
+  const pl = plg && typeof plg != 'boolean' ? plg : []
 
   // build
   const bundle = await rollup({
     input: inputs,
-    plugins: [...plugins],
     onwarn: onwarn,
-    ...RollupOptions
+    ...RollupOptions,
+    plugins: Array.isArray(pl) ? [...plugins, ...pl] : pl
   })
+
+  const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
 
   // 写入输出文件
   await bundle.write({

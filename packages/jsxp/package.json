@@ -1,6 +1,6 @@
 {
   "name": "jsxp",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "author": "lemonade",
   "description": "截图tsx组件",
   "main": "./lib/index.js",
@@ -32,9 +32,6 @@
       "import": "./tsconfig.json",
       "types": "./tsconfig.json"
     }
-  },
-  "bin": {
-    "jsxp": "./bin/index.js"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

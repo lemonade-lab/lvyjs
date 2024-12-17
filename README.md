@@ -179,6 +179,10 @@ module.exports = {
 
 - tailwindcss
 
+```sh
+yarn add tailwindcss
+```
+
 - postcss.config.cjs
 
 ```cjs

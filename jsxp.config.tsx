@@ -1,10 +1,10 @@
 import React from 'react'
 import { defineConfig } from 'jsxp'
+import Help from '@src/image/help'
 export default defineConfig({
   routes: {
-    '/AssMessage': {
-      // body 内容
-      component: <div>xxx</div>
+    '/Help': {
+      component: <Help />
     }
   }
 })

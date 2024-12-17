@@ -6,7 +6,7 @@ import crypto from 'node:crypto'
  * @returns
  */
 const convertPath = (inputPath: string) => {
-  return process.platform === 'win32' ? inputPath.replace(/\\/g, '/') : inputPath
+  return ['win32'].includes(process.platform) ? inputPath : inputPath.replace(/\\/g, '/')
 }
 
 /**
@@ -15,13 +15,8 @@ const convertPath = (inputPath: string) => {
  */
 export const generateModuleContent = (relativePath: string) => {
   const contents = [
-    'const createUrl = (basePath, path) => {',
-    "const platform = ['linux', 'android', 'darwin'];",
-    'const T = platform.includes(process.platform);',
-    'const reg = T ? /^file:\\/\\// : /^file:\\/\\/\\//;',
-    "return new URL(path, basePath).href.replace(reg, '');",
-    '};',
-    `const fileUrl = createUrl(import.meta.url, '${convertPath(relativePath)}');`,
+    `const reg = ['win32'].includes(process.platform) ? /^file:\\/\\/\\// : /^file:\\/\\// ;`,
+    `const fileUrl = import.meta.resolve('${convertPath(relativePath)}').replace(reg, '');`,
     'export default fileUrl;'
   ].join('\n')
   return contents

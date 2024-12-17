@@ -23,16 +23,12 @@ export const rollupAssets = (options?: RollupAssetsOptions) => {
           name: basename(id),
           source: readFileSync(id)
         })
-        const content = [
-          'const createUrl = () => {',
-          "const platform = ['linux', 'android', 'darwin'];",
-          'const T = platform.includes(process.platform);',
-          'const reg = T ?  /^file:\\/\\// : /^file:\\/\\/\\//',
-          'return import.meta.ROLLUP_FILE_URL_' + referenceId + ".replace(reg, '')",
-          '};',
-          'export default createUrl();'
+        const contents = [
+          `const reg = ['win32'].includes(process.platform) ? /^file:\\/\\/\\// : /^file:\\/\\// ;`,
+          `const fileUrl = import.meta.ROLLUP_FILE_URL_${referenceId}.replace(reg, '');`,
+          'export default fileUrl;'
         ].join('\n')
-        return content
+        return contents
       }
     }
   } as InputPluginOption

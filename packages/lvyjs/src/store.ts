@@ -2,13 +2,8 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import { RollupCommonJSOptions } from '@rollup/plugin-commonjs'
 import { RollupTypescriptOptions } from '@rollup/plugin-typescript'
-import { SameShape, BuildOptions } from 'esbuild'
 import { OutputOptions, RollupOptions } from 'rollup'
-
-interface Alias {
-  find: string | RegExp
-  replacement: string
-}
+import { Alias } from './typing'
 
 export type Options = {
   /**
@@ -45,15 +40,6 @@ export type Options = {
         filter?: RegExp
       }
     | false
-  /**
-   * 运行时配置
-   */
-  esbuild?: {
-    /**
-     *
-     */
-    options?: SameShape<BuildOptions, BuildOptions>
-  }
   /**
    * 打包时配置
    */

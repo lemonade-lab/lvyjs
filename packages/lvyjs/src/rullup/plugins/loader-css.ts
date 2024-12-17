@@ -44,15 +44,11 @@ export const rollupStylesCSSImport = (options?: RollupStylesCSSImportOptions) =>
         // 内容
         source: csscode
       })
-      const contents = `
-      const createUrl = () => {
-        const platform = ['linux', 'android', 'darwin'];
-        const T = platform.includes(process.platform);
-        const reg = T ?  /^file:\\/\\// : /^file:\\/\\/\\//
-        return import.meta.ROLLUP_FILE_URL_${refeId}.replace(reg, '') 
-      };
-      export default createUrl();
-    `
+      const contents = [
+        `const reg = ['win32'].includes(process.platform) ? /^file:\\/\\/\\// : /^file:\\/\\// ;`,
+        `const fileUrl = import.meta.ROLLUP_FILE_URL_${refeId}.replace(reg, '');`,
+        'export default fileUrl;'
+      ].join('\n')
       return contents
     }
   } as InputPluginOption

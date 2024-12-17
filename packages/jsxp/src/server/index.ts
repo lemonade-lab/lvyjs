@@ -33,9 +33,7 @@ export async function createServer() {
     return
   }
 
-  //
-  const config: JSXPOptions = await Dynamic(URI)
-
+  const config = (await import(`file://${URI}`))?.default
   if (!config) return
 
   const Com = new Component()
@@ -49,6 +47,41 @@ export async function createServer() {
 
   const routes = config?.routes
   if (!routes) return
+
+  const KEY = Date.now()
+  // 插入定时检查变化并刷新页面的 JS 代码
+  const refreshScript = `
+      <script>
+        (function() {
+          const checkForChanges = () => {
+            fetch('/check-for-changes?key=${KEY}')  
+              .then(response => response.json())
+              .then(data => {
+                if (data.hasChanges) {
+                  // 如果接口返回了变化，则刷新页面
+                  location.reload();
+                }
+              })
+              .catch(err => console.error('jsxp 未响应:', err));
+          };
+    
+          // 初次加载后每 1600 发送请求检查变化
+          setInterval(checkForChanges, 1600);
+        })();
+      </script>
+    `
+  router.get('/check-for-changes', ctx => {
+    if (ctx.request.query?.key == KEY) {
+      ctx.body = {
+        hasChanges: false
+      }
+    } else {
+      ctx.body = {
+        hasChanges: true
+      }
+    }
+  })
+  //
 
   //
   for (const url in routes) {
@@ -75,7 +108,7 @@ export async function createServer() {
       })
 
       //
-      ctx.body = HTML
+      ctx.body = `${HTML}${refreshScript}`
     })
   }
 
