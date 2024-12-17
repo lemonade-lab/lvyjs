@@ -1,14 +1,14 @@
 import { dirname, basename, resolve } from 'path'
 import { readFileSync } from 'fs'
 import { type InputPluginOption } from 'rollup'
-import { assetsReg } from '../../config'
+import { assetsRegExp } from '../../config'
 export type RollupAssetsOptions = { filter?: RegExp }
 /**
  * @param {Object} options
  * @returns {Object}
  */
 export const rollupAssets = (options?: RollupAssetsOptions) => {
-  const { filter = assetsReg } = options ?? {}
+  const { filter = assetsRegExp } = options ?? {}
   return {
     name: 'rollup-node-files',
     resolveId(source, importer) {

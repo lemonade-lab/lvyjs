@@ -1,13 +1,6 @@
 import { join } from 'path'
 import crypto from 'node:crypto'
-
-/**
- * @param inputPath
- * @returns
- */
-const convertPath = (inputPath: string) => {
-  return ['win32'].includes(process.platform) ? inputPath : inputPath.replace(/\\/g, '/')
-}
+import { convertPath } from './config'
 
 /**
  * 生成模块内容

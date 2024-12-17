@@ -1,20 +1,19 @@
 import { MessagePort } from 'worker_threads'
-import { generateCSSModuleContent, generateModuleContent } from './content'
+import { generateModuleContent, generateCSSModuleContent } from './content.js'
+import { convertPath, isWin32 } from './config.js'
 declare global {
   var lvyWorkerProt: MessagePort
 }
-const platform = ['win32'].includes(process.platform)
-const reg = platform ? /^file:\/\/\// : /^file:\/\//
+const reg = isWin32() ? /^file:\/\/\// : /^file:\/\//
+const baseURL = isWin32() ? 'file:///' : 'file://'
 const nodeReg = /(node_modules|node_|node:)/
 /**
- *
  * @param param0
  */
 export async function initialize({ port, lvyConfig }) {
   global.lvyConfig = lvyConfig
   global.lvyWorkerProt = port
 }
-
 /**
  * @param specifier
  * @param context
@@ -22,17 +21,16 @@ export async function initialize({ port, lvyConfig }) {
  * @returns
  */
 export async function resolve(specifier, context, nextResolve) {
-  const { parentURL = null } = context
   if (!global.lvyConfig?.alias) {
     global.lvyConfig.alias = {}
   }
   if (global.lvyConfig.alias?.entries) {
     for (const { find, replacement } of global.lvyConfig.alias?.entries) {
       if (specifier.startsWith(find)) {
-        const url = specifier.replace(find, replacement)
+        const parentURL = `${baseURL}${convertPath(specifier.replace(find, replacement))}`
         return nextResolve(specifier, {
           ...context,
-          parentURL: parentURL ? new URL(url, parentURL).href : new URL(url).href
+          parentURL: parentURL
         })
       }
     }

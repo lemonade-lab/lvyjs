@@ -40,3 +40,4 @@ main()
 
 export * from './store.js'
 export * from './rullup/index.ts'
+export * from './config.ts'

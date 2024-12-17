@@ -1,5 +1,5 @@
-export const assetsReg = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-export const cssReg = /\.(css|scss|less|sass|less)$/
+export const assetsRegExp = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
+export const stylesRegExp = /\.(css|scss|less|sass|less)$/
 /**
  *
  * @param val
@@ -12,4 +12,10 @@ export const createAlias = val => {
     alias[entry.find] = entry.replacement
   })
   return alias
+}
+export const isWin32 = () => {
+  return ['win32'].includes(process.platform)
+}
+export const convertPath = (inputPath: string) => {
+  return isWin32() ? inputPath.replace(/\\/g, '/') : inputPath
 }
