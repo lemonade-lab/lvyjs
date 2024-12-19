@@ -1,7 +1,23 @@
-// @import url('@src/assets/test2.css');
-// @import url('@src/assets/test3.scss');
+@import url('@src/assets/test.css');
+@import url('@src/assets/test3.scss');
+@import url('./test.css');
+@import url('./test3.scss');
+
+// okk。
+@import './test.css';
+@import '@src/assets/test.css';
+
+// error
+// @import './test2.scss';
+// @import '@src/assets/test2.scss';
+
+// error
+// @use '@src/assets/test2.css';
+// @use '@src/assets/test3.scss';
+
+// error
+// @use './test2.css';
 // @use './test3.scss';
-// @use '@src/assets/test2.scss';
 
 %message-shared {
   border: 1px solid #ccc;

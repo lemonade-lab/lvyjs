@@ -1,7 +1,7 @@
 import React from 'react'
-import img_url from '../../assets/Google-Play.png'
+import img_url from '@src/assets/Google-Play.png'
 import { LinkStyleSheet } from 'jsxp'
-import css_output from './input.css'
+import css_output from '@src/image/views/input.css'
 /**
  * @returns
  */

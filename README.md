@@ -157,6 +157,24 @@ yarn add less sass -D
 @import 'src/assets/test2.less';
 ```
 
+- sass
+
+```sass
+@import url('@src/assets/test.css')
+@import url('./test.css')
+@import './test.css'
+@import '@src/assets/test.css'
+// @import ./_test4.sass
+@use 'test4
+```
+
+error
+
+```
+@import url('@src/assets/_test4.sass')
+@import url('./_test4.sass')
+```
+
 ### postcss
 
 - 压缩

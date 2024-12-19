@@ -7,3 +7,6 @@ kook:
   token: ''
   # 主人
   master_id: null
+
+gui:
+  port: 9601

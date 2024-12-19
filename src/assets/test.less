@@ -1,7 +1,19 @@
-// @import url('@src/assets/test1.css');
-// @import 'src/assets/test2.less';
+// @import url('./test.css');
 // @import url('./test2.less');
-// @import './test1.css';
+// // path
+// @import url('@src/assets/test.css');
+
+// // okk。
+// @import './test.css';
+// @import './test2.less';
+// // path
+// @import '@src/assets/test.css';
+
+// error 运行时已使用插件解决
+// @import url('@src/assets/test2.less');
+// @import '@src/assets/test2.less';
+
+// build 需要待修改
 
 // 变量
 @primary-color: #3498db;
@@ -47,6 +59,7 @@
   .item-@{i} {
     width: 100px * @i;
   }
+
   .loop(@i - 1);
 }
 

@@ -1,8 +1,7 @@
 import fs from 'fs'
 import postcss from 'postcss'
 import { createRequire } from 'module'
-import { join, dirname, resolve, isAbsolute } from 'path'
-import { createAlias } from './config'
+import path, { join, dirname, resolve } from 'path'
 
 const require = createRequire(import.meta.url)
 
@@ -13,6 +12,20 @@ const config = {
   scss: null
 }
 
+/**
+ *
+ * @param val
+ * @returns
+ */
+export const createAlias = val => {
+  const alias = {}
+  // 遍历 entries 数组
+  val.entries.forEach(entry => {
+    alias[entry.find] = entry.replacement
+  })
+  return alias
+}
+
 interface AliasConfig {
   [key: string]: string
 }
@@ -21,6 +34,7 @@ export default function LessAliasPlugin(aliases: AliasConfig) {
   return {
     install: function (less: any, pluginManager: any) {
       const AliasFileManager = new less.FileManager()
+
       AliasFileManager.loadFile = function (
         filename: string,
         currentDirectory: string,
@@ -34,7 +48,11 @@ export default function LessAliasPlugin(aliases: AliasConfig) {
             break
           }
         }
-        const fullPath = isAbsolute(filename) ? filename : resolve(currentDirectory, filename)
+
+        const fullPath = path.isAbsolute(filename)
+          ? filename
+          : path.resolve(currentDirectory, filename)
+
         return less.FileManager.prototype.loadFile.call(
           this,
           fullPath,
@@ -43,6 +61,7 @@ export default function LessAliasPlugin(aliases: AliasConfig) {
           environment
         )
       }
+
       // 注册自定义文件管理器
       pluginManager.addFileManager(AliasFileManager)
     },
@@ -216,4 +235,7 @@ const postCSS = (inputPath: string, outputPath: string) => {
   })
 }
 
-export { postCSS }
+postCSS('src/assets/test.sass', 'node_modules/lvyjs/assets/test.css')
+// postCSS('src/assets/test.less', 'node_modules/lvyjs/assets/test.css')
+// postCSS('src/assets/test.scss', 'node_modules/lvyjs/assets/test.css')
+console.log('node_modules/lvyjs/assets/test.css')

@@ -1,6 +1,6 @@
 import { LinkStyleSheet } from 'jsxp'
 import React from 'react'
-import css_output from './input.css'
+import css_output from '@src/image/views/input.css'
 export default (_ = {}) => {
   return (
     <html>
