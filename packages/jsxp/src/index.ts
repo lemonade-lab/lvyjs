@@ -1,7 +1,6 @@
 export * from './utils/puppeteer.js'
 export * from './types.js'
 export * from './component.js'
-export * from './utils/module.js'
 export * from './picture.js'
 export * from './components/index.js'
 export * from './server/index.js'

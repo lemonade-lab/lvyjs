@@ -49,17 +49,18 @@ export class Component {
   }
 }
 
+/**
+ *
+ * @param str
+ * @param mountStatic
+ * @returns
+ */
 const deleteCwd = (str: string, mountStatic: string) => {
-  if (process.platform == 'win32') {
-    // 修掉join路径
-    const cwd = process.cwd().replace(/\\/g, '\\\\')
-    const arg = new RegExp(cwd, 'g')
-    // 修掉URL路径
-    const cwd2 = process.cwd().replace(/\\/g, '\\/')
-    const arg2 = new RegExp(cwd2, 'g')
-    return str.replace(arg, mountStatic).replace(arg2, mountStatic)
+  if (process.platform != 'win32') {
+    return str.replace(new RegExp(process.cwd().replace(/\\/g, '\\/'), 'gi'), mountStatic)
   }
-  const cwd = process.cwd().replace(/\\/g, '\\/')
-  const arg = new RegExp(cwd, 'g')
-  return str.replace(arg, mountStatic)
+  return str
+    .replace(new RegExp(process.cwd().replace(/\\/g, '\\\\'), 'gi'), mountStatic)
+    .replace(new RegExp(process.cwd().replace(/\\/g, '\\/'), 'gi'), mountStatic)
+    .replace(new RegExp(process.cwd().replace(/\\/g, '/'), 'gi'), mountStatic)
 }
