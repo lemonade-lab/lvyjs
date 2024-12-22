@@ -5,11 +5,22 @@ import { RollupTypescriptOptions } from '@rollup/plugin-typescript'
 import { OutputOptions, RollupOptions } from 'rollup'
 import { Alias } from './typing'
 
+export type PluginsValue = (options: Options) => void
+
+export type PluginsCallBack =
+  | PluginsValue
+  | {
+      load?: PluginsValue
+      build?: PluginsValue
+    }
+
+export type PluginsOptions = (options: Options) => PluginsCallBack | void
+
 export type Options = {
   /**
    * 配置调整机及其回调插件
    */
-  plugins?: ((options: Options) => ((options: Options) => void) | void | undefined | null)[]
+  plugins?: PluginsOptions[]
   /**
    * 别名
    */
@@ -69,15 +80,6 @@ export type Options = {
       }
     | false
 }
-
-/**
- *
- * @param options
- * @returns
- */
-export const usePlugin = (
-  load: (options: Options) => ((options: Options) => void) | void | undefined | null
-) => load
 
 /**
  *

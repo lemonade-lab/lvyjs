@@ -1,6 +1,7 @@
 import module from 'node:module'
 import { MessageChannel } from 'node:worker_threads'
 import { postCSS } from './postcss'
+import { assetsRegExp, stylesRegExp } from './config'
 if (!module.register) {
   throw new Error(
     `This version of Node.js (${process.version}) does not support module.register(). Please upgrade to Node v18.19 or v20.6 and above.`
@@ -23,9 +24,13 @@ module.register('./loader.js', {
   data: {
     port: port2,
     lvyConfig: {
-      alias: global.lvyConfig.alias,
-      assets: global.lvyConfig.assets,
-      styles: global.lvyConfig.styles
+      alias: global.lvyConfig?.alias,
+      assets: global.lvyConfig?.assets ?? {
+        filter: assetsRegExp
+      },
+      styles: global.lvyConfig?.styles ?? {
+        filter: stylesRegExp
+      }
     }
   },
   transferList: [port2]

@@ -16,12 +16,6 @@ export default defineConfig({
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   },
-  assets: {
-    filter: /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-  },
-  styles: {
-    filter: /\.(less|sass|scss|css)$/
-  },
   build: {
     OutputOptions: {
       intro: `/**  https://lvyjs.dev script start **/`,
