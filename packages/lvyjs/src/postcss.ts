@@ -2,7 +2,7 @@ import fs from 'fs'
 import postcss from 'postcss'
 import { createRequire } from 'module'
 import { join, dirname, resolve, isAbsolute } from 'path'
-import { createAlias } from './config'
+import { convertPath, createAlias } from './config'
 
 const require = createRequire(import.meta.url)
 
@@ -81,7 +81,7 @@ const loadPostcssConfig = (configPath: string, typing: string) => {
             for (const entry of aliasEntries) {
               if (id.startsWith(entry.find)) {
                 const aliasedPath = id.replace(entry.find, entry.replacement)
-                return resolve(basedir, aliasedPath) // 返回绝对路径
+                return convertPath(resolve(basedir, aliasedPath))
               }
             }
             return id // 默认返回原始路径
@@ -99,10 +99,10 @@ const loadPostcssConfig = (configPath: string, typing: string) => {
             for (const entry of aliasEntries) {
               if (asset.url.startsWith(entry.find)) {
                 const aliasedPath = asset.url.replace(entry.find, entry.replacement)
-                return aliasedPath // 返回解析后的 URL
+                return convertPath(aliasedPath)
               }
             }
-            return asset.url // 返回原始路径
+            return convertPath(asset.url)
           }
         })
       )
