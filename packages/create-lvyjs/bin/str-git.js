@@ -1,5 +1,6 @@
 export default `node_modules
 /data
+/public
 /logs
 /lib
 /log

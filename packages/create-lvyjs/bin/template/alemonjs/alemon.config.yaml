@@ -1,12 +1,6 @@
 pm2:
-  name: 'kook'
-  script: 'alemonjs start --input ./lib/index.js --login kook'
-
-kook:
-  # 令牌
-  token: ''
-  # 主人
-  master_id: null
+  name: 'gui'
+  script: 'node index.js --login gui'
 
 gui:
   port: 9601

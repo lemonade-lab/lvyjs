@@ -1,6 +1,6 @@
 import { Text, useSend } from 'alemonjs'
 export default OnResponse((event, next) => {
-  if (!/^hello$/.test(event.MessageText)) {
+  if (!/^(\/|#)?hello$/.test(event.MessageText)) {
     next()
     return
   }

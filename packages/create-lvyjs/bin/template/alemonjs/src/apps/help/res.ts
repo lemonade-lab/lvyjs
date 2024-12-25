@@ -1,7 +1,7 @@
 import { Image, Text, useSend } from 'alemonjs'
-import { Pictures } from '@src/image/index.js'
+import { Pictures } from '@src/image/index'
 export default OnResponse(async (event, next) => {
-  if (!/^pic$/.test(event.MessageText)) {
+  if (!/^(\/|#)?pic$/.test(event.MessageText)) {
     next()
     return
   }

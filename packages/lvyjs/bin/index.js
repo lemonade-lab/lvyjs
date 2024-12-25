@@ -36,12 +36,11 @@ if (args.includes('build')) {
   }
 } else if (args.includes('dev')) {
   const argsx = args.filter(arg => arg !== 'dev')
-  const argv = [
-    args.includes('--no-watch') ? '' : 'watch',
-    '--clear-screen=false',
-    jsdir,
-    '--lvy-dev'
-  ]
+  const argv = [jsdir, '--lvy-dev']
+  if (!args.includes('--no-watch')) {
+    argv.unshift('--clear-screen=false')
+    argv.unshift('watch')
+  }
   const msg = fork(tsxDir, [...argv, ...argsx], {
     stdio: 'inherit',
     env: Object.assign({}, process.env, {

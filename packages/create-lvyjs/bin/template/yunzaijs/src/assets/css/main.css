@@ -1,9 +1,9 @@
 :root {
-  --bg-img: url('../App-Store.png');
+  --bg-img: url('@src/assets/App-Store.png');
 }
 
 #root[data-theme='light'] {
-  --bg-img: url('../Google-Play.png');
+  --bg-img: url('@src/assets/Google-Play.png');
 }
 
 .show-image {

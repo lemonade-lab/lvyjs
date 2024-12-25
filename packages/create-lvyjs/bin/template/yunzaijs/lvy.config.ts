@@ -16,8 +16,8 @@ const useYunzaiJS = async () => {
 export default defineConfig({
   plugins: [
     () => {
-      if (includes('--yunzai')) return useYunzaiJS
       if (includes('--view')) return jsxp
+      return useYunzaiJS
     }
   ],
   alias: {

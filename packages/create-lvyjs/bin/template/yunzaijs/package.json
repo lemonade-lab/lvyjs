@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "app": "node lib/main.js",
-    "dev": "lvy dev --yunzai",
+    "dev": "lvy dev",
     "view": "lvy dev --view",
     "build": "lvy build",
     "start": "pm2 startOrRestart pm2.config.cjs",
@@ -18,16 +18,17 @@
     "check-format": "git diff --exit-code"
   },
   "dependencies": {
-    "jsxp": "^1.0.4"
+    "jsxp": "^1.0.8"
   },
   "devDependencies": {
     "@types/node": "^20.8.5",
     "icqq": "^0.6.10",
-    "lvyjs": "^0.2.6",
+    "lvyjs": "^0.2.14",
     "prettier": "^3.0.3",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.4.5",
-    "yunzaijs": "^1.0.0-rc.5"
+    "yunzaijs": "^1.0.0-rc.5",
+    "cssnano": "^7.0.6"
   },
   "types": "lib",
   "exports": {
