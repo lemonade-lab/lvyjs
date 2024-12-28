@@ -1,6 +1,6 @@
 {
   "name": "create-lvyjs",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "lvyjs dev",
   "author": "ningmengchongshui",
   "main": "bin/index.js",

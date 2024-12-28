@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@alemonjs/discord": "^0.2.1",
-    "@alemonjs/gui": "^0.2.2",
+    "@alemonjs/gui": "^0.2.3",
     "@alemonjs/kook": "^0.2.1",
     "@alemonjs/onebot": "^0.2.1",
     "@alemonjs/qq": "^0.2.1",
@@ -38,7 +38,7 @@
     "@types/node": "^20.3.1",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.5",
-    "alemonjs": "2.0.0-rc.74",
+    "alemonjs": "2.0.0-rc.77",
     "tailwindcss": "^3.4.17",
     "cssnano": "^7.0.6",
     "lvyjs": "^0.2.14",
