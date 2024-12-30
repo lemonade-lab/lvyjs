@@ -1,36 +1,10 @@
 {
   "compilerOptions": {
-    /* model */
-    "target": "ESNext",
-    "module": "ESNext",
-    "esModuleInterop": true,
-    /* json */
-    "resolveJsonModule": true,
-    /* Bundler mode */
-    "jsx": "react",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "skipLibCheck": true,
-    /* version */
-    "ignoreDeprecations": "5.0",
-    /* strict */
-    "allowJs": false,
-    "noImplicitAny": false,
-    "useDefineForClassFields": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    /* Linting */
-    "strict": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
       "@src/*": ["src/*"]
     }
   },
-  "include": ["packages/**/*", "jsxp.*.tsx", "lvy.*.ts", "src/**/*"]
+  "include": ["src/**/*", "jsxp.*.tsx"],
+  "extends": "lvyjs/tsconfig"
 }

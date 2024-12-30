@@ -6,6 +6,9 @@
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
+  "scripts": {
+    "build": "node bundle.js"
+  },
   "dependencies": {
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^28.0.0",
@@ -42,6 +45,10 @@
     "./tsconfig.json": {
       "import": "./tsconfig.json",
       "types": "./tsconfig.json"
+    },
+    "./tsconfig": {
+      "import": "./tsconfig.json",
+      "types": "./tsconfig.json"
     }
   },
   "bin": {
@@ -50,7 +57,9 @@
   "keywords": [
     "ts",
     "tsx",
-    "react"
+    "react",
+    "rullup",
+    "esbuild"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

@@ -19,6 +19,16 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.22"
   },
+  "scripts": {
+    "build": "node bundle.js"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "lvyjs": "^0.2.13",
+    "rollup": "^4.18.1",
+    "rollup-plugin-dts": "^6.1.1",
+    "tsx": "^4.19.1"
+  },
   "exports": {
     ".": {
       "import": "./lib/index.js",
@@ -27,10 +37,6 @@
     "./.puppeteerrc": {
       "require": "./.puppeteerrc.cjs",
       "types": "./.puppeteerrc.d.ts"
-    },
-    "./tsconfig.json": {
-      "import": "./tsconfig.json",
-      "types": "./tsconfig.json"
     }
   },
   "bin": {

@@ -1,4 +1,4 @@
-export default `node_modules
+var GitBody = `node_modules
 /data
 /public
 /logs
@@ -8,3 +8,5 @@ export default `node_modules
 *.log
 yarn.lock
 `
+
+export { GitBody as default }

@@ -1,23 +1,26 @@
 #!/usr/bin/env node
-import { existsSync, cpSync, writeFileSync } from 'fs'
-import { dirname, resolve, join } from 'path'
+
+import { existsSync, writeFileSync } from 'fs'
+import { cpSync } from 'fs'
+import { resolve, join, dirname } from 'path'
 import { fileURLToPath } from 'node:url'
 import enquirer from 'enquirer'
+const { prompt } = enquirer
 import GitBody from './str-git.js'
 import NpmPublish from './str-npm.js'
 import NpmrcBody from './str-npmr.js'
 import { readFileSync } from 'node:fs'
 
-const { prompt } = enquirer
 const currentFilePath = fileURLToPath(import.meta.url)
 const currentDirPath = dirname(currentFilePath)
 const alemonjsCliPath = resolve(currentDirPath)
+
 /**
  *
  * @param {*} name
  * @returns
  */
-async function createTemplate(name) {
+async function createTemplate(name: string) {
   // 名字不存在
   if (!name) process.exit()
   // 当前目录下
@@ -51,6 +54,7 @@ async function createTemplate(name) {
     return
   }
 }
+
 /**
  *
  */
@@ -66,4 +70,5 @@ async function main() {
   if (!response) process.exit()
   if (response['template']) createTemplate(response['template'])
 }
+
 main()

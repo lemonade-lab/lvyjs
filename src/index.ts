@@ -1,6 +1,5 @@
 import '@src/tes.js'
 import '@src/test'
-import '@src/abc/index'
 import '@src/my.js'
 import json from '@src/assets/test.json'
 import cssURL from '@src/assets/test.css'

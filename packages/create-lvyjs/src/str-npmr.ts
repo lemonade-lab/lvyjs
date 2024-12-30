@@ -1,4 +1,4 @@
-var NpmrcBody = `# 为项目单独设置镜像
+export default `# 为项目单独设置镜像
 registry=https://registry.npmmirror.com
 # canvas
 canvas_binary_host_mirror=https://ghproxy.com/https://github.com/Automattic/node-canvas/releases/download/
@@ -18,5 +18,3 @@ node-linker=hoisted
 shamefully-hoist=true
 # 严格的对等依赖关系
 strict-peer-dependencies=false`
-
-export { NpmrcBody as default }

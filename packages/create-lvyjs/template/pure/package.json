@@ -11,7 +11,14 @@
     "build": "lvy build"
   },
   "devDependencies": {
-    "@types/node": "^20.3.1",
+    "@types/node": "^18",
     "lvyjs": "^0.2.14"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

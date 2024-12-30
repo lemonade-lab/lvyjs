@@ -18,9 +18,8 @@ if (!existsSync(tsxDir)) {
   tsxDir = join(process.cwd(), 'node_modules/tsx/dist/cli.mjs')
 }
 if (!existsSync(tsxDir)) {
-  new Error('无法搜寻tsx')
+  new Error('tsx not found')
 }
-
 if (args.includes('build')) {
   const argsx = args.filter(arg => arg !== 'build')
   const msg = fork(tsxDir, [jsdir, '--lvy-build', ...argsx], {
