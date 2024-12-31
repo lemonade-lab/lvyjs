@@ -1,6 +1,7 @@
+# 具体见 pm2.config.cjs
 pm2:
-  name: 'gui'
-  script: 'node index.js --login gui'
-
-gui:
-  port: 9601
+  apps:
+    - name: 'gui'
+      script: 'node index.js --login gui'
+      env:
+        NODE_ENV: 'production'
