@@ -7,8 +7,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "view": "lvy dev",
-    "build": "lvy build"
+    "view": "npx lvy dev",
+    "build": "npx lvy build"
   },
   "devDependencies": {
     "@types/node": "^18",

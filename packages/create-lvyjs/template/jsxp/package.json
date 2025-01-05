@@ -7,8 +7,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "view": "lvy dev --view",
-    "build": "lvy build"
+    "view": "npx lvy dev --view",
+    "build": "npx lvy build"
   },
   "dependencies": {
     "classnames": "^2.5.1",
