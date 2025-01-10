@@ -50,7 +50,7 @@
     "@types/node": "^18",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.5",
-    "alemonjs": "2.0.0-rc.82",
+    "alemonjs": "2.0.0-rc.84",
     "tailwindcss": "^3.4.17",
     "cssnano": "^7.0.6",
     "lvyjs": "^0.2.14",

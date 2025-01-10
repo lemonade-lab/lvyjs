@@ -1,6 +1,6 @@
 {
   "name": "jsxp",
-  "version": "1.0.8",
+  "version": "1.1.1",
   "author": "lemonade",
   "description": "截图tsx组件",
   "main": "./lib/index.js",

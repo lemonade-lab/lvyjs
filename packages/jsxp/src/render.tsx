@@ -1,23 +1,7 @@
 import React from 'react'
-import { Picture } from './picture.js'
 import { ComponentCreateOpsionType, ObtainProps, ScreenshotFileOptions } from './types.js'
-class ScreenshotPicture extends Picture {
-  constructor() {
-    // 继承实例
-    super()
-    // 启动
-    this.Pup.start()
-  }
-}
-let puppeteer: typeof ScreenshotPicture.prototype = null
-/**
- * 得到一个 puppeteer 实例
- * @returns
- */
-export const Render = () => {
-  if (!puppeteer) puppeteer = new ScreenshotPicture()
-  return puppeteer
-}
+import { picture } from './picture.js'
+
 // 队列
 const queue: {
   ComOptions: ComponentCreateOpsionType
@@ -25,8 +9,10 @@ const queue: {
   resolve: Function
   reject: Function
 }[] = []
+
 // 标志
 let isProcessing = false
+
 /**
  * 处理队列
  * @returns
@@ -41,7 +27,12 @@ const processQueue = async () => {
   // 得到队列中的第一个任务
   const { ComOptions, PupOptions, resolve, reject } = queue.shift()
   try {
-    const img = await puppeteer.screenshot(ComOptions, PupOptions)
+    const pic = await picture()
+    if (!pic) {
+      reject(false)
+      return
+    }
+    const img = await pic.screenshot(ComOptions, PupOptions)
     // 完成任务
     resolve(img)
   } catch (error) {
@@ -63,7 +54,6 @@ export const render = async (
   PupOptions?: ScreenshotFileOptions
 ): Promise<Buffer | false> => {
   // 如果 puppeteer 尚未初始化，则进行初始化
-  if (!puppeteer) puppeteer = new ScreenshotPicture()
   // 返回一个 Promise
   return new Promise((resolve, reject) => {
     // 将任务添加到队列
@@ -75,33 +65,44 @@ export const render = async (
   })
 }
 
+type RendersType = <
+  ComponentsType extends Record<string, React.FC<any> | React.ComponentClass<any>>
+>(
+  Components: ComponentsType
+) => <TKey extends keyof ComponentsType>(
+  /**
+   * 组件 key
+   */
+  key: TKey,
+  /**
+   * 组件 props
+   */
+  options: ObtainProps<ComponentsType[TKey]>,
+  /**
+   * 文件名名。默认为组件key
+   */
+  name?: string
+) => Promise<false | Buffer>
+
 /**
  * 对组件 map 进行合并渲染
  * @param Components
  * @returns
  */
-export const renders = <
-  ComponentsType extends Record<string, React.FC<any> | React.ComponentClass<any>>
->(
-  Components: ComponentsType
-): (<TKey extends keyof ComponentsType>(
-  key: TKey,
-  options: ObtainProps<ComponentsType[TKey]>,
-  name?: string
-) => Promise<false | Buffer>) => {
+export const renders: RendersType = Components => {
   return async (key, props, name) => {
     // 选择组件
-    const MyComponent = Components[key]
+    const Component = Components[key]
     const k = String(key)
     // 确保 MyComponent 是有效的组件
-    if (!MyComponent) {
+    if (!Component) {
       throw new Error(`Component with key "${k}" does not exist.`)
     }
     // 截图
     return render({
       path: k,
       name: `${name ?? k}.html`,
-      component: <MyComponent {...props} />
+      component: <Component {...props} />
     })
   }
 }

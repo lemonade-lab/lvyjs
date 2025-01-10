@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server'
 import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { ComponentCreateOpsionType } from './types.ts'
+import { ComponentCreateOpsionType } from '../types.ts'
 
 /**
  * ************

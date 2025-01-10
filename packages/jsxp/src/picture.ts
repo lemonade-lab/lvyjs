@@ -1,36 +1,15 @@
-import { PuppeteerLaunchOptions } from 'puppeteer'
-import { Component } from './component'
-import { Puppeteer } from './utils/puppeteer'
-import { ComponentCreateOpsionType, ScreenshotFileOptions } from './types'
+import { Picture } from './utils/picture.js'
+let pic: typeof Picture.prototype | null = null
 /**
- * 截图类
+ * 得到一个 puppeteer 实例
+ * @returns
  */
-export class Picture {
-  /**
-   * 浏览器控制
-   */
-  Pup: typeof Puppeteer.prototype
-  /**
-   * 组件控制
-   */
-  Com: typeof Component.prototype
-  /**
-   * 初始化组件和浏览器
-   */
-  constructor(launch?: PuppeteerLaunchOptions) {
-    this.Com = new Component()
-    this.Pup = new Puppeteer(launch)
+export const picture = async () => {
+  if (!pic) {
+    // 每次都new？
+    pic = new Picture()
+    // 启动浏览器
+    pic.puppeteer.start()
   }
-
-  /**
-   *
-   * @param element
-   * @param options
-   * @returns
-   */
-  async screenshot(options: ComponentCreateOpsionType, PupOptions?: ScreenshotFileOptions) {
-    const Address = this.Com.compile(options)
-    if (typeof options.create == 'boolean' && options.create === false) return Address
-    return this.Pup.render(Address, PupOptions)
-  }
+  return pic
 }

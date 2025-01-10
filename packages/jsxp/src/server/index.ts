@@ -3,13 +3,20 @@ import KoaStatic from 'koa-static'
 import Router from 'koa-router'
 import { join } from 'path'
 import mount from 'koa-mount'
-import { Component } from '../component.js'
+import { Component } from '../utils/component.js'
 import { existsSync } from 'fs'
 import { JSXPOptions } from '../types.js'
+
+/**
+ * 动态加载
+ * @param URL
+ * @returns
+ */
 const Dynamic = async (URL: string) => {
   const modulePath = `file://${URL}?update=${Date.now()}`
   return (await import(modulePath))?.default
 }
+
 /**
  *
  * @param Port
