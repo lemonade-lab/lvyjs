@@ -47,9 +47,9 @@
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "bugs": "https://github.com/lvyjs/core/issues",
+  "bugs": "https://github.com/lemonade-lab/lvyjs/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lvyjs/core.git"
+    "url": "https://github.com/lemonade-lab/lvyjs.git"
   }
 }
