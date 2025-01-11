@@ -9,7 +9,7 @@ export const picture = async () => {
     // 每次都new？
     pic = new Picture()
     // 启动浏览器
-    pic.puppeteer.start()
+    await pic.puppeteer.start()
   }
   return pic
 }

@@ -1,48 +1,6 @@
 import React from 'react'
-import { ComponentCreateOpsionType, ObtainProps, ScreenshotFileOptions } from './types.js'
-import { picture } from './picture.js'
-
-// 队列
-const queue: {
-  ComOptions: ComponentCreateOpsionType
-  PupOptions?: ScreenshotFileOptions
-  resolve: Function
-  reject: Function
-}[] = []
-
-// 标志
-let isProcessing = false
-
-/**
- * 处理队列
- * @returns
- */
-const processQueue = async () => {
-  if (queue.length === 0) {
-    isProcessing = false
-    return
-  }
-  // 设置标志
-  isProcessing = true
-  // 得到队列中的第一个任务
-  const { ComOptions, PupOptions, resolve, reject } = queue.shift()
-  try {
-    const pic = await picture()
-    if (!pic) {
-      reject(false)
-      return
-    }
-    const img = await pic.screenshot(ComOptions, PupOptions)
-    // 完成任务
-    resolve(img)
-  } catch (error) {
-    console.error(error)
-    // 拒绝任务
-    reject(false)
-  }
-  // 处理下一个任务
-  processQueue()
-}
+import { ComponentCreateOpsionType, ObtainProps, RenderOptions } from './types.js'
+import { getProcessing, queue, renderQueue } from './queue.js'
 
 /**
  * 渲染组件为图片
@@ -51,7 +9,7 @@ const processQueue = async () => {
  */
 export const render = async (
   ComOptions: ComponentCreateOpsionType,
-  PupOptions?: ScreenshotFileOptions
+  PupOptions?: RenderOptions
 ): Promise<Buffer | false> => {
   // 如果 puppeteer 尚未初始化，则进行初始化
   // 返回一个 Promise
@@ -59,8 +17,8 @@ export const render = async (
     // 将任务添加到队列
     queue.push({ ComOptions, PupOptions, resolve, reject })
     // 如果没有任务正在进行，则开始处理队列
-    if (!isProcessing) {
-      processQueue()
+    if (!getProcessing()) {
+      renderQueue()
     }
   })
 }

@@ -1,6 +1,6 @@
-import { type PuppeteerLaunchOptions } from 'puppeteer'
+import { Browser, type PuppeteerLaunchOptions } from 'puppeteer'
 import puppeteer from 'puppeteer'
-import { ScreenshotFileOptions } from '../types.js'
+import { RenderOptions } from '../types.js'
 
 /**
  * 默认参数配置
@@ -80,7 +80,7 @@ export class Puppeteer {
   #launch: PuppeteerLaunchOptions = { ...PuppeteerDefineOptioins }
 
   // 应用缓存
-  browser = null
+  browser: Browser = null
 
   /**
    * 读取浏览器地址
@@ -168,48 +168,32 @@ export class Puppeteer {
    * @param Options
    * @returns
    */
-  async render(htmlPath: string, Options?: ScreenshotFileOptions) {
-    if (!(await this.isStart())) return false
-    try {
-      const page = await this.browser?.newPage().catch(err => {
-        console.error(err)
-      })
-      if (!page) return false
-      await page.goto(`file://${htmlPath}`, {
-        timeout: Options?.timeout ?? 120000
-      })
-      const body = await page.$(Options?.tab ?? 'body')
-      if (!body) return false
-      console.info('[puppeteer] success')
-      const buff = await body
-        .screenshot(
-          Options?.SOptions ?? {
-            type: 'png'
-          }
-        )
-        .catch(err => {
-          console.error('[puppeteer]', 'screenshot', err)
-          return false
-        })
-      await page.close().catch(err => {
-        console.error('[puppeteer]', 'page close', err)
-      })
-      if (!buff) {
-        console.error('[puppeteer]', htmlPath)
-        return false
-      }
-      if (buff instanceof Uint8Array) {
-        return Buffer.from(buff)
-      } else if (Buffer.isBuffer(buff)) {
-        return buff
-      } else {
-        console.error('[puppeteer]', 'type error')
-        console.error(buff)
-        return buff
-      }
-    } catch (err) {
-      console.error('[puppeteer] newPage', err)
-      return false
+  async render(htmlPath: string, Options?: RenderOptions) {
+    const T = await this.isStart()
+    if (!T) return false
+    const page = await this.browser?.newPage()
+    if (!page) return false
+    const { goto, selector, screenshot } = Options ?? {}
+    await page.goto(`file://${htmlPath}`, {
+      waitUntil: 'networkidle2',
+      timeout: 12000,
+      ...(goto ?? {})
+    })
+    const body = await page.$(selector ?? 'body')
+    if (!body) return false
+    console.info('[puppeteer] success')
+    const buff = await body.screenshot({
+      type: 'png',
+      ...(screenshot ?? {})
+    })
+    await page.close()
+    if (!buff) return false
+    if (buff instanceof Uint8Array) {
+      return Buffer.from(buff)
+    } else if (Buffer.isBuffer(buff)) {
+      return buff
+    } else {
+      throw new Error('type')
     }
   }
 }

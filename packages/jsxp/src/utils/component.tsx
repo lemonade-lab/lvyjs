@@ -41,7 +41,7 @@ export class Component {
     // mkdir
     mkdirSync(dir, { recursive: true })
     // url
-    const address = join(dir, options?.name ?? 'hello.html')
+    const address = join(dir, options?.name ?? 'jsxp.html')
     // write
     writeFileSync(address, options.server === true ? deleteCwd(html, options?.mountStatic) : html)
     // url

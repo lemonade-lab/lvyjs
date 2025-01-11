@@ -1,7 +1,7 @@
 import { PuppeteerLaunchOptions } from 'puppeteer'
 import { Component } from './component'
 import { Puppeteer } from './puppeteer'
-import { ComponentCreateOpsionType, ScreenshotFileOptions } from '../types'
+import { ComponentCreateOpsionType, RenderOptions } from '../types'
 /**
  * 截图类
  * 结合了组件和浏览器
@@ -29,9 +29,9 @@ export class Picture {
    * @param options
    * @returns
    */
-  async screenshot(options: ComponentCreateOpsionType, PupOptions?: ScreenshotFileOptions) {
+  async screenshot(options: ComponentCreateOpsionType, RenderOptions?: RenderOptions) {
     const Address = this.component.compile(options)
     if (typeof options.create == 'boolean' && options.create === false) return Address
-    return this.puppeteer.render(Address, PupOptions)
+    return await this.puppeteer.render(Address, RenderOptions)
   }
 }

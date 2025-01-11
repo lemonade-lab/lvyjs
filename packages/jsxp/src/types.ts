@@ -1,17 +1,16 @@
+import { GoToOptions, ScreenshotOptions } from 'puppeteer'
 import React from 'react'
 
 /**
  * 无头浏览器渲染函数配置参数
  */
-export interface ScreenshotFileOptions {
-  SOptions?: {
-    type: 'jpeg' | 'png' | 'webp'
-    quality: number
+export type RenderOptions = {
+  goto?: GoToOptions
+  selector?: any
+  screenshot?: Readonly<ScreenshotOptions> & {
+    encoding: 'base64'
   }
-  tab?: string
-  timeout?: number
 }
-
 /**
  *
  */
@@ -30,10 +29,6 @@ export type ComponentCreateOpsionType = {
    */
   create?: boolean
   /**
-   * 可被浏览器渲染的完整组件
-   */
-  component: React.ReactNode
-  /**
    * 默认/file
    */
   mountStatic?: string
@@ -41,6 +36,10 @@ export type ComponentCreateOpsionType = {
    * server 模式
    */
   server?: boolean
+  /**
+   * 可被浏览器渲染的完整组件
+   */
+  component?: React.ReactNode
 }
 
 export type JSXPOptions = {
@@ -51,7 +50,9 @@ export type JSXPOptions = {
   statics?: string | string[]
   mountStatic?: string
   routes?: {
-    [key: string]: ComponentCreateOpsionType
+    [key: string]: {
+      component?: React.ReactNode
+    }
   }
 }
 

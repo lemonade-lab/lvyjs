@@ -108,7 +108,7 @@ export async function createServer() {
 
       // options
       const HTML = Com.compile({
-        ...options,
+        component: options.component,
         mountStatic: config?.mountStatic ?? '/file',
         create: false,
         server: true
