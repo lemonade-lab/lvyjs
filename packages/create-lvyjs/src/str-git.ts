@@ -7,4 +7,5 @@ export default `node_modules
 *.logs
 *.log
 yarn.lock
+.cache
 `

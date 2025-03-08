@@ -5,3 +5,5 @@ pm2:
       script: 'node index.js --login gui'
       env:
         NODE_ENV: 'production'
+gui:
+  port: 17127

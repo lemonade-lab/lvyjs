@@ -1,5 +1,5 @@
-export default defineChildren(() => ({
+export default defineChildren({
   onCreated() {
-    console.log('onCreated')
+    console.log('本地测试启动')
   }
-}))
+})
