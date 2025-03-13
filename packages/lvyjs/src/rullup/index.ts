@@ -8,6 +8,8 @@ import { getScriptFiles } from './utils/files'
 import alias from '@rollup/plugin-alias'
 import { rollupAssets, rollupStylesCSSImport } from './plugins/index'
 import { createAlias } from '../config'
+import { readFileSync, statSync } from 'fs'
+import zlib from 'zlib'
 
 /**
  * 用于忽略警告
@@ -108,15 +110,34 @@ export const buildJS = async (inputs: string[]) => {
 
   const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
 
+  // 获取 dir 的值
+  const outputDir = OutputOptions['dir'] || 'lib'
+
   // 写入输出文件
-  await bundle.write({
-    dir: 'lib',
+  const { output } = await bundle.write({
+    dir: outputDir,
     format: 'es',
     sourcemap: false,
     preserveModules: true,
     assetFileNames: 'assets/[name]-[hash][extname]',
     ...OutputOptions
   })
+
+  // 打印产出地址和文件大小
+  console.log(`✓ ${output.length} modules transformed.`)
+  for (const file of output) {
+    const filePath = join(outputDir, file.fileName)
+    const fileSize = statSync(filePath).size
+    const fileContent = readFileSync(filePath)
+    const gzipFileSize = zlib.gzipSync(fileContent).length
+    console.log(
+      `${filePath.padEnd(40)} ${(fileSize / 1024).toFixed(2)} kB │ gzip: ${(
+        gzipFileSize / 1024
+      ).toFixed(2)} kB`
+    )
+  }
+
+  //
 }
 
 /**
