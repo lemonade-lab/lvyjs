@@ -1,16 +1,15 @@
 import { defineConfig } from 'lvyjs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const server = () => import('./src/index')
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const includes = (value: string) => process.argv.includes(value)
+const server = () => import('./src/index')
 const jsxp = () => import('jsxp').then(async res => res.createServer())
 export default defineConfig({
   plugins: [
     () => {
-      if (includes('--app')) return server
       if (includes('--view')) return jsxp
+      return server
     }
   ],
   alias: {
