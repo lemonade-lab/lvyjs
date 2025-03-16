@@ -1,11 +1,9 @@
-import { Text, useSend } from 'alemonjs'
+import { createSelects, Text, useSend } from 'alemonjs'
+export const selects = createSelects(['message.create'])
 export const regular = /^(\/|#)?hello$/
-export default OnResponse(
-  event => {
-    // 创建一个send
-    const Send = useSend(event)
-    // 发送消息
-    Send(Text('hello Word'))
-  },
-  ['message.create']
-)
+export default onResponse(selects, event => {
+  // 创建一个send
+  const Send = useSend(event)
+  // 发送消息
+  Send(Text('hello Word'))
+})

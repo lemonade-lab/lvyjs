@@ -1,6 +1,5 @@
 import React from 'react'
-import css_output from '@src/asstes/main.css'
-import { LinkStyleSheet } from 'jsxp'
+import Html from './Html'
 type Props = {
   data: string
   theme?: string
@@ -11,15 +10,10 @@ type Props = {
  */
 export default function App({ data, theme }: Props) {
   return (
-    <html>
-      <head>
-        <LinkStyleSheet src={css_output} />
-      </head>
-      <body>
-        <section id="root" data-theme={theme} className="flex flex-col">
-          <div className="text-blue-400 text-5xl">{data}</div>
-        </section>
-      </body>
-    </html>
+    <Html>
+      <section id="root" data-theme={theme} className="flex flex-col">
+        <div className="text-blue-400 text-5xl">{data}</div>
+      </section>
+    </Html>
   )
 }
