@@ -7,9 +7,10 @@ import { convertPath } from './config'
  * @param {string} relativePath 相对路径
  */
 export const generateModuleContent = (relativePath: string) => {
+  const baseURL = decodeURIComponent(relativePath)
   const contents = [
     `const reg = ['win32'].includes(process.platform) ? /^file:\\/\\/\\// : /^file:\\/\\// ;`,
-    `const fileUrl = import.meta.resolve('${convertPath(relativePath)}').replace(reg, '');`,
+    `const fileUrl = import.meta.resolve('${convertPath(baseURL)}').replace(reg, '');`,
     'export default fileUrl;'
   ].join('\n')
   return contents
@@ -30,20 +31,21 @@ const chache = {}
  * @param fileUrl
  * @returns
  */
-export const generateCSSModuleContent = (pathURL: string) => {
-  const fileName = getRandomName(pathURL)
-  const outputFileURL = convertPath(
+export const generateCSSModuleContent = (relativePath: string) => {
+  const inputURL = decodeURIComponent(relativePath)
+  const fileName = getRandomName(inputURL)
+  const outputURL = convertPath(
     join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${fileName}.css`)
   )
-  if (!chache[pathURL]) {
+  if (!chache[inputURL]) {
     global.lvyWorkerProt.postMessage({
       type: 'CSS_MODULE_GENERATED',
       payload: {
-        from: pathURL,
-        to: outputFileURL
+        from: inputURL,
+        to: outputURL
       }
     })
-    chache[pathURL] = true
+    chache[inputURL] = true
   }
-  return `export default "${outputFileURL}";`
+  return `export default "${outputURL}";`
 }

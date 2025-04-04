@@ -4,10 +4,13 @@ import { convertPath, isWin32 } from './config.js'
 declare global {
   var lvyWorkerProt: MessagePort
 }
+// 用来消去 路径中的 file:///
 const reg = isWin32() ? /^file:\/\/\// : /^file:\/\//
 const baseURL = isWin32() ? 'file:///' : 'file://'
 const nodeReg = /(node_modules|node_|node:)/
+
 /**
+ * 初始化时
  * @param param0
  */
 export async function initialize({ port, lvyConfig }) {
@@ -15,6 +18,7 @@ export async function initialize({ port, lvyConfig }) {
   global.lvyWorkerProt = port
 }
 /**
+ * 启动时
  * @param specifier
  * @param context
  * @param nextResolve
@@ -39,6 +43,7 @@ export async function resolve(specifier, context, nextResolve) {
 }
 
 /**
+ * 加载脚本时
  * @param url
  * @param context
  * @param defaultLoad
@@ -56,7 +61,9 @@ export const load = (url, context, nextLoad) => {
   }
   // 匹配静态资源
   if (global.lvyConfig.assets?.filter && global.lvyConfig.assets?.filter.test(baseURL)) {
-    const code = generateModuleContent(baseURL.replace(reg, ''))
+    // 消除 file:///
+    const url = baseURL.replace(reg, '')
+    const code = generateModuleContent(url)
     return nextLoad(baseURL, {
       format: 'module',
       source: code
@@ -66,7 +73,9 @@ export const load = (url, context, nextLoad) => {
     global.lvyConfig.styles = {}
   }
   if (global.lvyConfig.styles?.filter && global.lvyConfig.styles?.filter.test(baseURL)) {
-    const code = generateCSSModuleContent(baseURL.replace(reg, ''))
+    // 消除 file:///
+    const url = baseURL.replace(reg, '')
+    const code = generateCSSModuleContent(url)
     return nextLoad(baseURL, {
       format: 'module',
       source: code

@@ -13,7 +13,9 @@ port1.on('message', msg => {
   if (msg.type == 'CSS_MODULE_GENERATED') {
     const { from, to } = msg.payload
     if (!cache[from]) {
-      postCSS(from, to)
+      const formPath = decodeURIComponent(from)
+      postCSS(formPath, to)
+      // postCSS(from, to)
       cache[from] = true
     }
   }
