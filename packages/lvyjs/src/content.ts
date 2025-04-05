@@ -1,6 +1,8 @@
-import { join } from 'path'
 import crypto from 'node:crypto'
 import { convertPath } from './config'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /**
  * 生成模块内容
@@ -34,9 +36,7 @@ const chache = {}
 export const generateCSSModuleContent = (relativePath: string) => {
   const inputURL = decodeURIComponent(relativePath)
   const fileName = getRandomName(inputURL)
-  const outputURL = convertPath(
-    join(process.cwd(), 'node_modules', 'lvyjs', 'assets', `${fileName}.css`)
-  )
+  const outputURL = convertPath(join(__dirname, 'assets', `${fileName}.css`))
   if (!chache[inputURL]) {
     global.lvyWorkerProt.postMessage({
       type: 'CSS_MODULE_GENERATED',

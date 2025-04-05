@@ -1,5 +1,5 @@
-# LVY
+# LYVJS
 
-一款为 node 构建的开发工具
+一款为 NodeJS 构建的开发工具
 
-https://github.com/lemonade-lab/lvyjs
+https://lvyjs.dev
