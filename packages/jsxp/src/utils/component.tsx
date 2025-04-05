@@ -59,7 +59,7 @@ export class Component {
     html = html.replace(attrRegex, (match, attr, link) => {
       const url = decodeURIComponent(link)
       if (existsSync(url)) {
-        const newPath = `/files?path=${url}`
+        const newPath = `/files?path=${encodeURIComponent(link)}`
         return `${attr}="${newPath}"`
       }
       return match
@@ -69,7 +69,7 @@ export class Component {
     html = html.replace(urlRegex, (match, link) => {
       const url = decodeURIComponent(link)
       if (existsSync(url)) {
-        const newPath = `/files?path=${url}`
+        const newPath = `/files?path=${encodeURIComponent(link)}`
         return `url(${newPath})`
       }
       return match
