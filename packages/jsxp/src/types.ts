@@ -11,8 +11,9 @@ export type RenderOptions = {
     encoding: 'base64'
   }
 }
+
 /**
- *
+ * 组件编译
  */
 export type ComponentCreateOpsionType = {
   /**
@@ -29,10 +30,6 @@ export type ComponentCreateOpsionType = {
    */
   create?: boolean
   /**
-   * 默认/file
-   */
-  mountStatic?: string
-  /**
    * server 模式
    */
   server?: boolean
@@ -42,13 +39,17 @@ export type ComponentCreateOpsionType = {
   component?: React.ReactNode
 }
 
+/**
+ * 工程配置选项
+ * @param options
+ * @returns
+ */
 export type JSXPOptions = {
   port?: number
   path?: string
   host?: string
   prefix?: string
   statics?: string | string[]
-  mountStatic?: string
   routes?: {
     [key: string]: {
       component?: React.ReactNode

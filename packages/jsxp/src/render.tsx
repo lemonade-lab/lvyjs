@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ComponentType } from 'react'
 import { ComponentCreateOpsionType, ObtainProps, RenderOptions } from './types.js'
 import { getProcessing, queue, renderQueue } from './queue.js'
 
@@ -44,6 +44,8 @@ type RendersType = <
 
 /**
  * 对组件 map 进行合并渲染
+ * 废弃
+ * @deprecated 废弃，请使用 renderComponentToBuffer
  * @param Components
  * @returns
  */
@@ -63,4 +65,23 @@ export const renders: RendersType = Components => {
       component: <Component {...props} />
     })
   }
+}
+
+/**
+ * @param name 组件名
+ * @param Component 组件（React 组件类型）
+ * @param props 参数（组件的 props 类型）
+ * @returns
+ */
+export const renderComponentToBuffer = <P extends Record<string, unknown>>(
+  name: string,
+  Component: ComponentType<P>,
+  props: P
+) => {
+  // 截图
+  return render({
+    path: name,
+    name: 'index.html',
+    component: <Component {...props} />
+  })
 }

@@ -1,5 +1,5 @@
 import { renderToString } from 'react-dom/server'
-import { mkdirSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { ComponentCreateOpsionType } from '../types.ts'
 
@@ -13,7 +13,7 @@ export class Component {
   #dir = ''
   //
   constructor() {
-    this.#dir = join(process.cwd(), 'data', 'component')
+    this.#dir = join(process.cwd(), '.data', 'component')
   }
 
   /**
@@ -30,7 +30,7 @@ export class Component {
      */
     if (typeof options?.create == 'boolean' && options?.create == false) {
       // is server  启动 server 解析
-      if (options.server === true) return deleteCwd(html, options?.mountStatic)
+      if (options.server === true) return this.processHtmlPaths(html)
       //
       return html
     }
@@ -43,24 +43,37 @@ export class Component {
     // url
     const address = join(dir, options?.name ?? 'jsxp.html')
     // write
-    writeFileSync(address, options.server === true ? deleteCwd(html, options?.mountStatic) : html)
+    writeFileSync(address, options.server === true ? this.processHtmlPaths(html) : html)
     // url
     return address
   }
-}
 
-/**
- *
- * @param str
- * @param mountStatic
- * @returns
- */
-const deleteCwd = (str: string, mountStatic: string) => {
-  if (process.platform != 'win32') {
-    return str.replace(new RegExp(process.cwd().replace(/\\/g, '\\/'), 'gi'), mountStatic)
+  /**
+   * 处理html路径
+   * @param html
+   * @returns
+   */
+  processHtmlPaths = (html: string) => {
+    // 使用正则表达式提取所有 src 和 href 属性中的路径
+    const attrRegex = /(src|href)=["']([^"']+)["']/g
+    html = html.replace(attrRegex, (match, attr, link) => {
+      const url = decodeURIComponent(link)
+      if (existsSync(url)) {
+        const newPath = `/files?path=${url}`
+        return `${attr}="${newPath}"`
+      }
+      return match
+    })
+    // 使用正则表达式提取 CSS 中 url() 的路径
+    const urlRegex = /url\(["']?([^"')]+)["']?\)/g
+    html = html.replace(urlRegex, (match, link) => {
+      const url = decodeURIComponent(link)
+      if (existsSync(url)) {
+        const newPath = `/files?path=${url}`
+        return `url(${newPath})`
+      }
+      return match
+    })
+    return html
   }
-  return str
-    .replace(new RegExp(process.cwd().replace(/\\/g, '\\\\'), 'gi'), mountStatic)
-    .replace(new RegExp(process.cwd().replace(/\\/g, '\\/'), 'gi'), mountStatic)
-    .replace(new RegExp(process.cwd().replace(/\\/g, '/'), 'gi'), mountStatic)
 }

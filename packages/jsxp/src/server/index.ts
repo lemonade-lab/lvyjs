@@ -2,10 +2,11 @@ import Koa from 'koa'
 import KoaStatic from 'koa-static'
 import Router from 'koa-router'
 import { join } from 'path'
-import mount from 'koa-mount'
 import { Component } from '../utils/component.js'
 import { existsSync } from 'fs'
 import { JSXPOptions } from '../types.js'
+import send from 'koa-send'
+import { createRefreshScript } from './refreshScript.js'
 
 /**
  * 动态加载
@@ -25,7 +26,13 @@ export async function createServer() {
   let URI = ''
 
   //
-  const configs = ['jsxp.config.tsx', 'jsxp.config.jsx']
+  const configs = [
+    'jsxp.config.tsx',
+    'jsxp.config.jsx',
+    'jsxp.config.js',
+    'jsxp.config.ts',
+    'jsxp.config.mjs'
+  ]
 
   for (const config of configs) {
     const dir = join(process.cwd(), config)
@@ -40,7 +47,7 @@ export async function createServer() {
     return
   }
 
-  const config = (await import(`file://${URI}`))?.default
+  const config = await Dynamic(URI)
   if (!config) return
 
   const Com = new Component()
@@ -55,28 +62,11 @@ export async function createServer() {
   const routes = config?.routes
   if (!routes) return
 
+  // 当前时间戳
   const KEY = Date.now()
+
   // 插入定时检查变化并刷新页面的 JS 代码
-  const refreshScript = `
-      <script>
-        (function() {
-          const checkForChanges = () => {
-            fetch('/check-for-changes?key=${KEY}')  
-              .then(response => response.json())
-              .then(data => {
-                if (data.hasChanges) {
-                  // 如果接口返回了变化，则刷新页面
-                  location.reload();
-                }
-              })
-              .catch(err => console.error('jsxp 未响应:', err));
-          };
-    
-          // 初次加载后每 1600 发送请求检查变化
-          setInterval(checkForChanges, 1600);
-        })();
-      </script>
-    `
+  const refreshScript = createRefreshScript(KEY)
   router.get('/check-for-changes', ctx => {
     if (ctx.request.query?.key == KEY) {
       ctx.body = {
@@ -88,45 +78,58 @@ export async function createServer() {
       }
     }
   })
-  //
 
-  //
+  // 文件请求 API
+  router.get('/files', async ctx => {
+    const filePath = ctx.query.path // 获取请求中的路径参数
+    if (!filePath) {
+      ctx.status = 400
+      ctx.body = { error: 'Missing "path" query parameter' }
+      return
+    }
+    const fileURL = decodeURIComponent(filePath) // 解码路径
+    // 检查文件是否存在
+    if (!existsSync(fileURL)) {
+      ctx.status = 404
+      ctx.body = { error: 'File not found' }
+      return
+    }
+    try {
+      // 发送文件内容
+      await send(ctx, fileURL, { root: '/' })
+    } catch (error) {
+      console.error('Error sending file:', error)
+      ctx.status = 500
+      ctx.body = { error: 'Internal server error' }
+    }
+  })
+
+  // 路由
   for (const url in routes) {
     console.log(`http://${config?.host ?? '127.0.0.1'}:${config?.port ?? 8080}${prefix + url}`)
     router.get(url, async ctx => {
       // 重新加载
       const config = await Dynamic(URI)
-
       // 不存在
       const routes = config?.routes
       if (!routes) return
-
       // 选择key
       const options = routes[url] as JSXPOptions['routes']['']
       // 丢失了
       if (!options) return
-
       // options
       const HTML = Com.compile({
         component: options.component,
-        mountStatic: config?.mountStatic ?? '/file',
         create: false,
         server: true
       })
-
-      //
+      // 内容
       ctx.body = `${HTML}${refreshScript}`
     })
   }
 
-  const PATH = process.cwd().replace(/\\/g, '\\\\')
-  const mountStatic = config?.mountStatic ?? '/file'
-
-  // static
-  app.use(mount(mountStatic, KoaStatic(PATH)))
-
+  // 静态文件
   const statics = config?.statics ?? 'public'
-
   if (Array.isArray(statics)) {
     for (const item of statics) {
       app.use(KoaStatic(item))
