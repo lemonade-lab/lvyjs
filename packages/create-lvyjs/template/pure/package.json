@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "lvyjs": "^0.2.17"
+    "lvyjs": "^0.2.19"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

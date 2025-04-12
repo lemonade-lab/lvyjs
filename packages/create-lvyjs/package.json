@@ -1,6 +1,6 @@
 {
   "name": "create-lvyjs",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "lvyjs dev",
   "author": "ningmengchongshui",
   "main": "bin/index.js",
@@ -21,7 +21,7 @@
     "lvyjs"
   ],
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
+    "registry": "https://registry.npmjs.com",
     "access": "public"
   },
   "bugs": "https://github.com/lemonade-lab/lvyjs/issues",

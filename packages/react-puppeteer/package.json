@@ -40,7 +40,8 @@
     }
   },
   "bin": {
-    "tsxp": "./bin/index.js"
+    "tsxp": "./bin/index.js",
+    "react-puppeteer": "./bin/index.js"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
