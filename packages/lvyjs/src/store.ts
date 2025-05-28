@@ -17,6 +17,9 @@ export type PluginsCallBack =
 export type PluginsOptions = (options: Options) => PluginsCallBack | void
 
 export type Options = {
+  env?: {
+    [key: string]: string
+  }
   /**
    * 配置调整机及其回调插件
    */
@@ -111,6 +114,12 @@ export const initConfig = async () => {
     const v = await import(`file://${join(process.cwd(), configDir)}`)
     if (v?.default) {
       global.lvyConfig = v.default
+      if (global.lvyConfig?.env) {
+        for (const key in global.lvyConfig.env) {
+          process.env[key] = String(global.lvyConfig.env[key])
+        }
+      }
+      process.env.NODE_ENV = process.env?.NODE_ENV || 'development'
     }
   }
 }
