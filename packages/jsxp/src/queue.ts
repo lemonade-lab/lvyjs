@@ -18,6 +18,8 @@ export const setProcessing = (bool: boolean) => {
 
 export const getProcessing = () => isProcessing
 
+let count = 0
+
 /**
  * 处理队列
  * @returns
@@ -30,20 +32,26 @@ export const renderQueue = async () => {
   // 设置标志
   isProcessing = true
   // 得到队列中的第一个任务
-  const { ComOptions, PupOptions, resolve, reject } = queue.shift()
+  const { ComOptions, PupOptions, resolve } = queue.shift()
   try {
     const pic = await picture()
     if (!pic) {
-      reject(false)
+      resolve(null)
       return
     }
     const img = await pic.screenshot(ComOptions, PupOptions)
+    count = 0 // 重置错误计数
     // 完成任务
     resolve(img)
   } catch (error) {
+    count++
     console.error(error)
     // 拒绝任务
-    reject(false)
+    resolve(null)
+    // 如果错误次数超过1次，重启浏览器
+    if (count > 1) {
+      await picture(true) // 重启浏览器
+    }
   }
   // 处理下一个任务
   renderQueue()
