@@ -1,18 +1,21 @@
-import { Pictures } from '@src/image/index'
-import { createSelects, Text, useSend, Image } from 'alemonjs'
-export const selects = createSelects(['message.create'])
+import { renderComponentToBuffer } from 'jsxp'
+import { Text, Image, useMessage } from 'alemonjs'
+import Help from '@src/image/conponent/help'
+export const selects = onSelects(['message.create'])
 export const regular = /^(\/|#)?pic$/
-export default onResponse(selects, async event => {
-  // 创建一个send
-  const Send = useSend(event)
+
+const res = onResponse(selects, async event => {
+  const [message] = useMessage(event)
   // pic
-  const img = await Pictures('help', {
+  const img = await renderComponentToBuffer('/help', Help, {
     data: 'AlemonJS 跨平台开发框架'
   })
   // send
   if (typeof img != 'boolean') {
-    Send(Image(img))
+    message.send(format(Image(img)))
   } else {
-    Send(Text('图片加载失败'))
+    message.send(format(Text('图片加载失败')))
   }
 })
+
+export default res
