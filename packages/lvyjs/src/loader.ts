@@ -28,7 +28,7 @@ export async function resolve(specifier, context, nextResolve) {
   if (!global.lvyConfig?.alias) {
     global.lvyConfig.alias = {}
   }
-  if (global.lvyConfig.alias?.entries) {
+  if (Array.isArray(global.lvyConfig.alias?.entries)) {
     for (const { find, replacement } of global.lvyConfig.alias?.entries) {
       if (specifier.startsWith(find)) {
         const parentURL = `${baseURL}${convertPath(specifier.replace(find, replacement))}`

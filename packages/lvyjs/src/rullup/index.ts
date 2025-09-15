@@ -58,6 +58,11 @@ export const buildJS = async (inputs: string[]) => {
 
   plugins.push(json())
 
+  const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
+
+  // 获取 dir 的值
+  const outputDir = OutputOptions['dir'] || 'lib'
+
   if (typeof global.lvyConfig.build != 'boolean') {
     //
     for (const key in global.lvyConfig.build) {
@@ -67,7 +72,11 @@ export const buildJS = async (inputs: string[]) => {
       if (key == 'commonjs' && !global.lvyConfig.build['@rollup/plugin-commonjs']) {
         plugins.push(commonjs(global.lvyConfig.build[key]))
       } else if (key == 'typescript' && !global.lvyConfig.build['@rollup/plugin-typescript']) {
-        plugins.push(typescript(global.lvyConfig.build[key]))
+        const config = global.lvyConfig.build[key] || {}
+        if (config.declarationDir === undefined) {
+          config.declarationDir = outputDir
+        }
+        plugins.push(typescript(config))
       } else if (key == 'OutputOptions') {
         continue
       } else if (key == 'RollupOptions') {
@@ -107,11 +116,6 @@ export const buildJS = async (inputs: string[]) => {
     ...RollupOptions,
     plugins: Array.isArray(pl) ? [...plugins, ...pl] : pl
   })
-
-  const OutputOptions = global.lvyConfig?.build?.OutputOptions ?? []
-
-  // 获取 dir 的值
-  const outputDir = OutputOptions['dir'] || 'lib'
 
   // 写入输出文件
   const { output } = await bundle.write({

@@ -7,6 +7,9 @@ export const stylesRegExp = /\.(css|scss|less|sass|less)$/
  */
 export const createAlias = val => {
   const alias = {}
+  if (!Array.isArray(val.entries)) {
+    return alias
+  }
   // 遍历 entries 数组
   val.entries.forEach(entry => {
     alias[entry.find] = entry.replacement
