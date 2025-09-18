@@ -24,14 +24,24 @@ export class Picture {
   }
 
   /**
-   *
-   * @param element
-   * @param options
-   * @returns
+   * 截图组件
+   * @param options 组件选项
+   * @param RenderOptions 渲染选项
+   * @returns 截图Buffer或HTML地址
    */
   async screenshot(options: ComponentCreateOpsionType, RenderOptions?: RenderOptions) {
     const Address = this.component.compile(options)
     if (typeof options.create == 'boolean' && options.create === false) return Address
     return await this.puppeteer.render(Address, RenderOptions)
+  }
+
+  /**
+   * 纯HTML模式截图
+   * @param htmlContent HTML内容字符串
+   * @param RenderOptions 渲染选项
+   * @returns 截图Buffer或null
+   */
+  async screenshotHtml(htmlContent: string, RenderOptions?: RenderOptions) {
+    return await this.puppeteer.renderHtml(htmlContent, RenderOptions)
   }
 }

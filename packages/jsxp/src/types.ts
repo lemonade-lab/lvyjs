@@ -6,10 +6,16 @@ import React from 'react'
  */
 export type RenderOptions = {
   goto?: GoToOptions
-  selector?: any
+  selector?: string
   screenshot?: Readonly<ScreenshotOptions> & {
     encoding: 'base64'
   }
+  /**
+   * 是否为纯HTML模式
+   * 当为true时，第一个参数将被视为HTML内容字符串而不是文件路径
+   */
+  isHtmlContent?: boolean
+  bufferFromEncoding?: BufferEncoding
 }
 
 /**
@@ -62,3 +68,22 @@ export type ObtainProps<T> = T extends React.FC<infer P>
   : T extends React.ComponentClass<infer P>
   ? P
   : never
+
+export type RendersType = <
+  ComponentsType extends Record<string, React.FC<any> | React.ComponentClass<any>>
+>(
+  Components: ComponentsType
+) => <TKey extends keyof ComponentsType>(
+  /**
+   * 组件 key
+   */
+  key: TKey,
+  /**
+   * 组件 props
+   */
+  options: ObtainProps<ComponentsType[TKey]>,
+  /**
+   * 文件名名。默认为组件key
+   */
+  name?: string
+) => Promise<false | Buffer>

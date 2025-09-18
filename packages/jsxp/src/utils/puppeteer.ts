@@ -164,36 +164,61 @@ export class Puppeteer {
 
   /**
    *
-   * @param htmlPath
+   * @param html
    * @param Options
    * @returns
    */
-  async render(htmlPath: string, Options?: RenderOptions) {
+  async render(html: string, Options?: RenderOptions) {
     const T = await this.isStart()
-    if (!T) return false
+    if (!T) return null
     const page = await this.browser?.newPage()
-    if (!page) return false
-    const { goto, selector, screenshot } = Options ?? {}
-    await page.goto(`file://${htmlPath}`, {
-      waitUntil: 'networkidle2',
-      timeout: 12000,
-      ...(goto ?? {})
-    })
+    if (!page) return null
+    const { goto, selector, screenshot, isHtmlContent, bufferFromEncoding } = Options ?? {}
+    if (isHtmlContent) {
+      await page.setContent(html, {
+        waitUntil: 'networkidle2',
+        timeout: 12000,
+        ...(goto ?? {})
+      })
+    } else {
+      await page.goto(`file://${html}`, {
+        waitUntil: 'networkidle2',
+        timeout: 12000,
+        ...(goto ?? {})
+      })
+    }
     const body = await page.$(selector ?? 'body')
-    if (!body) return false
+    if (!body) return null
     console.info('[puppeteer] success')
     const buff = await body.screenshot({
       type: 'png',
       ...(screenshot ?? {})
     })
     await page.close()
-    if (!buff) return false
+    if (!buff) return null
     if (buff instanceof Uint8Array) {
       return Buffer.from(buff)
     } else if (Buffer.isBuffer(buff)) {
       return buff
-    } else {
-      throw new Error('type')
+    } else if (typeof buff === 'string') {
+      const curbuff = buff as string
+      // base64
+      if (curbuff.startsWith('data:')) {
+        const base64Data = curbuff.split(',')[1] || ''
+        return Buffer.from(base64Data, 'base64')
+      }
+      return Buffer.from(buff, bufferFromEncoding)
     }
+    return null
+  }
+
+  /**
+   *
+   * @param htmlContent
+   * @param Options
+   * @returns
+   */
+  renderHtml(htmlContent: string, Options?: RenderOptions) {
+    return this.render(htmlContent, { ...Options, isHtmlContent: true })
   }
 }

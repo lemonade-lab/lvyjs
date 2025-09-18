@@ -1,11 +1,12 @@
 import React, { ComponentType } from 'react'
-import { ComponentCreateOpsionType, ObtainProps, RenderOptions } from './types.js'
-import { getProcessing, queue, renderQueue } from './queue.js'
-
+import { ComponentCreateOpsionType, RenderOptions, RendersType } from './types.js'
+import { getProcessing, queue, renderQueue, renderHtmlQueue } from './queue.js'
+import { picture } from './picture.js'
+import { renderToString } from 'react-dom/server'
 /**
  * 渲染组件为图片
- * @param htmlPath
- * @param options
+ * @param ComOptions 组件选项
+ * @param PupOptions 渲染选项
  */
 export const render = async (
   ComOptions: ComponentCreateOpsionType,
@@ -15,7 +16,13 @@ export const render = async (
   // 返回一个 Promise
   return new Promise((resolve, reject) => {
     // 将任务添加到队列
-    queue.push({ ComOptions, PupOptions, resolve, reject })
+    queue.push({
+      type: 'component',
+      ComOptions,
+      PupOptions,
+      resolve,
+      reject
+    })
     // 如果没有任务正在进行，则开始处理队列
     if (!getProcessing()) {
       renderQueue()
@@ -23,33 +30,14 @@ export const render = async (
   })
 }
 
-type RendersType = <
-  ComponentsType extends Record<string, React.FC<any> | React.ComponentClass<any>>
->(
-  Components: ComponentsType
-) => <TKey extends keyof ComponentsType>(
-  /**
-   * 组件 key
-   */
-  key: TKey,
-  /**
-   * 组件 props
-   */
-  options: ObtainProps<ComponentsType[TKey]>,
-  /**
-   * 文件名名。默认为组件key
-   */
-  name?: string
-) => Promise<false | Buffer>
-
 /**
  * 对组件 map 进行合并渲染
- * 废弃
  * @deprecated 废弃，请使用 renderComponentToBuffer
  * @param Components
  * @returns
  */
 export const renders: RendersType = Components => {
+  console.warn('[jsxp] renders function is deprecated, please use renderComponentToBuffer instead')
   return async (key, props, name) => {
     // 选择组件
     const Component = Components[key]
@@ -84,4 +72,41 @@ export const renderComponentToBuffer = <P extends Record<string, unknown>>(
     name: 'index.html',
     component: <Component {...props} />
   })
+}
+
+export const renderComponentIsHtmlToBuffer = <P extends Record<string, unknown>>(
+  Component: ComponentType<P>,
+  props: P,
+  PupOptions?: RenderOptions
+) => {
+  // 截图
+  return renderHtmlQueue(`<!DOCTYPE html>${renderToString(<Component {...props} />)}`, PupOptions)
+}
+
+/**
+ * 纯HTML模式渲染（使用队列）
+ * @param htmlContent HTML内容字符串
+ * @param PupOptions 渲染选项
+ * @returns 截图Buffer或null
+ */
+export const renderHtmlToBuffer = async (
+  htmlContent: string,
+  PupOptions?: RenderOptions
+): Promise<Buffer | null> => {
+  return await renderHtmlQueue(htmlContent, PupOptions)
+}
+
+/**
+ * 纯HTML模式渲染（直接渲染，不使用队列）
+ * @param htmlContent HTML内容字符串
+ * @param PupOptions 渲染选项
+ * @returns 截图Buffer或null
+ */
+export const renderHtmlToBufferDirect = async (
+  htmlContent: string,
+  PupOptions?: RenderOptions
+): Promise<Buffer | null> => {
+  const pic = await picture()
+  if (!pic) return null
+  return await pic.screenshotHtml(htmlContent, PupOptions)
 }
