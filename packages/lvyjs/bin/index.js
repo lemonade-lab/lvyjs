@@ -9,13 +9,23 @@ const currentFilePath = fileURLToPath(import.meta.url)
 const currentDirPath = dirname(currentFilePath)
 const pkgFilr = join(currentDirPath, '../package.json')
 const jsFile = join(currentDirPath, '../lib/index.js')
+const loaderFile = join(currentDirPath, '../lib/main.js')
 const jsdir = relative(process.cwd(), jsFile)
 const require = createRequire(import.meta.url)
-const tsxDir = require.resolve('tsx/cli')
+// const tsxDir = require.resolve('tsx/cli')
+// 构建时，使用 rollup
 if (args.includes('build')) {
   const argsx = args.filter(arg => arg !== 'build')
-  const msg = fork(tsxDir, [jsdir, '--lvy-build', ...argsx], {
+  const msg = fork(jsdir, ['--lvy-build', ...argsx], {
     stdio: 'inherit',
+    // 自己挂 execArgv
+    execArgv: [
+      ...process.execArgv,
+      '--require',
+      require.resolve('tsx/preflight'),
+      '--import',
+      require.resolve('tsx')
+    ],
     env: Object.assign({}, process.env, {
       PKG_DIR: pkgFilr
     }),
@@ -25,6 +35,7 @@ if (args.includes('build')) {
     console.error(msg.error)
     process.exit()
   }
+  // 运行时，使用 tsx
 } else if (args.includes('dev')) {
   const argsx = args.filter(arg => arg !== 'dev')
   const argv = [jsdir, '--lvy-dev']
@@ -32,8 +43,18 @@ if (args.includes('build')) {
     argv.unshift('--clear-screen=false')
     argv.unshift('watch')
   }
-  const msg = fork(tsxDir, [...argv, ...argsx], {
+  const msg = fork(jsdir, [...argv, ...argsx], {
     stdio: 'inherit',
+    // 自己挂 execArgv
+    execArgv: [
+      ...process.execArgv,
+      '--require',
+      require.resolve('tsx/preflight'),
+      '--import',
+      require.resolve('tsx'),
+      '--import',
+      loaderFile
+    ],
     env: Object.assign({}, process.env, {
       PKG_DIR: pkgFilr
     }),

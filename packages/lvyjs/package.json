@@ -1,6 +1,6 @@
 {
   "name": "lvyjs",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "description": "tsx compile script",
   "author": "lemonade",
   "license": "MIT",
@@ -29,26 +29,31 @@
   "exports": {
     ".": {
       "import": "./lib/index.js",
-      "types": "./lib/index.d.ts"
+      "types": "./lib/index.d.ts",
+      "require": "./lib/index.js"
     },
     "./loader": {
       "import": "./lib/loader.js",
-      "types": "./lib/loader.d.ts"
+      "types": "./lib/loader.d.ts",
+      "require": "./lib/loader.js"
     },
     "./register": {
       "import": "./lib/main.js",
-      "types": "./lib/main.d.ts"
+      "types": "./lib/main.d.ts",
+      "require": "./lib/main.js"
     },
     "./env": {
       "types": "./env.d.ts"
     },
     "./tsconfig.json": {
       "import": "./tsconfig.json",
-      "types": "./tsconfig.json"
+      "types": "./tsconfig.json",
+      "require": "./tsconfig.json"
     },
     "./tsconfig": {
       "import": "./tsconfig.json",
-      "types": "./tsconfig.json"
+      "types": "./tsconfig.json",
+      "require": "./tsconfig.json"
     }
   },
   "bin": {

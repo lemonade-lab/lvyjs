@@ -15,9 +15,6 @@ const onDev = async () => {
       await apps.push(plugin(global.lvyConfig))
     }
   }
-  // 执行loader
-  await import('./main.js')
-  //
   for (const app of apps) {
     if (!app) {
       continue
