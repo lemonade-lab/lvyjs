@@ -1,5 +1,6 @@
 import module from 'node:module'
 import { MessageChannel } from 'node:worker_threads'
+import { initConfig } from './store'
 import { postCSS } from './postcss'
 import { assetsRegExp, stylesRegExp } from './config'
 if (!module.register) {
@@ -7,6 +8,7 @@ if (!module.register) {
     `This version of Node.js (${process.version}) does not support module.register(). Please upgrade to Node v18.19 or v20.6 and above.`
   )
 }
+await initConfig()
 const { port1, port2 } = new MessageChannel()
 const cache = {}
 port1.on('message', msg => {
