@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/node": "^22",
     "icqq": "^0.6.10",
-    "lvyjs": "^0.2.17",
+    "lvyjs": "^0.2.25",
     "prettier": "^3.0.3",
     "yunzaijs": "^1.0.0-rc.5",
     "cssnano": "^7.0.6"

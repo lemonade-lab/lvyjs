@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "test",
+      "name": "dev",
       "type": "node",
       "request": "launch",
       "runtimeArgs": ["dev"],
@@ -10,7 +10,7 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "jsxp",
+      "name": "view",
       "type": "node",
       "request": "launch",
       "runtimeArgs": ["dev", "--view"],
