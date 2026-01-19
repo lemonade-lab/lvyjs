@@ -5,6 +5,8 @@ node_modules
 !public
 !/lib
 !/.puppeteerrc.cjs
+!/.puppeteerrc.mjs
+!/.puppeteerrc.d.ts
 !/env.d.ts
 !/tsconfig.json
 !/bin
