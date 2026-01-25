@@ -10,7 +10,7 @@
 [lvyjs-s]: https://img.shields.io/npm/v/lvyjs.svg
 [lvyjs-p]: https://www.npmjs.com/package/lvyjs
 
-文档： [https://lvyjs.dev/](https://lemonade-lab.github.io/lvyjs.dev/)
+文档： https://lemonade-lab.github.io/lvyjs.dev/
 
 - use
 
