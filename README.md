@@ -10,7 +10,7 @@
 [lvyjs-s]: https://img.shields.io/npm/v/lvyjs.svg
 [lvyjs-p]: https://www.npmjs.com/package/lvyjs
 
-文档： https://lvyjs.dev/
+文档： [https://lvyjs.dev/](https://lemonade-lab.github.io/lvyjs.dev/)
 
 - use
 
@@ -224,4 +224,4 @@ export default {
 
 ## Community
 
-QQ Group 806943302
+QQ Group 1012967625
