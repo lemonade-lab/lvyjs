@@ -1,18 +1,11 @@
 import { existsSync, watch } from 'fs'
 import { join } from 'path'
 import process from 'process'
+import { configFiles } from './config'
 
 const main = async () => {
-  const files = [
-    'lvy.config.ts',
-    'lvy.config.js',
-    'lvy.config.mjs',
-    'lvy.config.cjs',
-    'lvy.config.tsx'
-  ]
-
   let configDir = ''
-  for (const file of files) {
+  for (const file of configFiles) {
     if (existsSync(file)) {
       configDir = file
       break
@@ -65,11 +58,17 @@ const main = async () => {
   // 首次发送
   await sendConfig()
 
-  // 监听文件变化
-  watch(process.cwd(), (_event, filename) => {
-    if (files.includes(filename)) {
-      console.info(`[lvyjs] 配置文件 ${filename} 已变化，重新加载...`)
-      sendConfig()
+  // 只监听配置文件本身（而非整个 cwd），避免无关文件变化触发大量回调
+  const configPath = join(process.cwd(), configDir)
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  watch(configPath, eventType => {
+    if (eventType === 'change') {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null
+        console.info(`[lvyjs] 配置文件 ${configDir} 已变化，重新加载...`)
+        sendConfig()
+      }, 300)
     }
   })
 

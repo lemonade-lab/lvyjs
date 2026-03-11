@@ -26,7 +26,7 @@ const getRandomName = (str: string) => {
   return hash.digest('hex')
 }
 
-const chache = {}
+const cache = {}
 
 /**
  *
@@ -37,7 +37,7 @@ export const generateCSSModuleContent = (relativePath: string) => {
   const inputURL = decodeURIComponent(relativePath)
   const fileName = getRandomName(inputURL)
   const outputURL = convertPath(join(__dirname, 'assets', `${fileName}.css`))
-  if (!chache[inputURL]) {
+  if (!cache[inputURL]) {
     global.lvyWorkerProt.postMessage({
       type: 'CSS_MODULE_GENERATED',
       payload: {
@@ -45,7 +45,7 @@ export const generateCSSModuleContent = (relativePath: string) => {
         to: outputURL
       }
     })
-    chache[inputURL] = true
+    cache[inputURL] = true
   }
   return `export default "${outputURL}";`
 }

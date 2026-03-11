@@ -43,6 +43,25 @@ export type Options = {
       }
     | false
   /**
+   * 监听文件/目录变化，自动重启开发进程
+   * @example
+   * watch: ['src/config.yaml', 'public']
+   * watch: { paths: ['src/config.yaml'], delay: 500 }
+   */
+  watch?:
+    | string[]
+    | {
+        /**
+         * 要监听的文件或目录路径（相对于项目根目录）
+         */
+        paths: string[]
+        /**
+         * 防抖延迟（毫秒），默认 500
+         */
+        delay?: number
+      }
+    | false
+  /**
    * 打包时配置
    */
   build?:
@@ -75,16 +94,9 @@ export type Options = {
 /**
  *
  */
-declare global {
-  var lvyConfig: Options
-}
-
-/**
- *
- */
 export const initConfig = async () => {
   if (!global.lvyConfig) global.lvyConfig = {}
-  const files = [
+  const configFiles = [
     'lvy.config.ts',
     'lvy.config.js',
     'lvy.config.mjs',
@@ -92,7 +104,7 @@ export const initConfig = async () => {
     'lvy.config.tsx'
   ]
   let configDir = ''
-  for (const file of files) {
+  for (const file of configFiles) {
     if (existsSync(file)) {
       configDir = file
       break
@@ -121,4 +133,4 @@ export const getOptions = () => global.lvyConfig
  * @param param0
  * @returns
  */
-export const defineConfig = (optoins?: Options) => optoins
+export const defineConfig = (options?: Options) => options

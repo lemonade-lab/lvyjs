@@ -1,5 +1,16 @@
 export const assetsRegExp = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-export const stylesRegExp = /\.(css|scss|less|sass|less)$/
+export const stylesRegExp = /\.(css|scss|less|sass)$/
+
+/**
+ * 支持的配置文件名列表（按优先级排序）
+ */
+export const configFiles = [
+  'lvy.config.ts',
+  'lvy.config.js',
+  'lvy.config.mjs',
+  'lvy.config.cjs',
+  'lvy.config.tsx'
+]
 /**
  *
  * @param val

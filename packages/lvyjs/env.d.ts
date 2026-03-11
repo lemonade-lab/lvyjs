@@ -46,3 +46,9 @@ declare module '*.ico' {
   const src: string
   export default src
 }
+
+// lvyjs global config
+import type { Options } from './src/store'
+declare global {
+  var lvyConfig: Options
+}

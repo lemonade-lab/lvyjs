@@ -166,7 +166,7 @@ const postCSS = (inputPath: string, outputPath: string) => {
     typing = 'scss'
   }
 
-  const postcssConfig = loadPostcssConfig(configPath, 'css')
+  const postcssConfig = loadPostcssConfig(configPath, typing)
   if (!postcssConfig) return
 
   const readAndProcessCSS = async () => {
