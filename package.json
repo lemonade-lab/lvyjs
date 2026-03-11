@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "npx lvy dev",
+    "dev": "npx lvy src/index.ts",
     "build": "npx lvy build",
     "bundle": "npx lerna run build",
     "test": "jest",
