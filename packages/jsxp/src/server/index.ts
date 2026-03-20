@@ -1,7 +1,7 @@
 import Koa from 'koa'
 import KoaStatic from 'koa-static'
 import Router from 'koa-router'
-import { join } from 'path'
+import { join, normalize } from 'path'
 import { Component } from '../utils/component.js'
 import { existsSync } from 'fs'
 import { RouteOption } from '../types.js'
@@ -13,13 +13,19 @@ import { createRefreshScript } from './refreshScript.js'
  * @param URL
  * @returns
  */
+const _dynamicCache = new Map<string, WeakRef<any>>()
 const Dynamic = async (URL: string) => {
   const modulePath = `file://${URL}?update=${Date.now()}`
-  return (await import(modulePath))?.default
+  const mod = (await import(modulePath))?.default
+  // 只保留最新引用，旧模块随 GC 回收
+  _dynamicCache.set(URL, new WeakRef(mod))
+  return mod
 }
 
 /**
- *
+ * 创建服务器
+ * 监听配置文件中的路由，渲染组件并返回HTML
+ * 支持静态文件服务和热更新检查
  * @param Port
  */
 export async function createServer() {
@@ -66,7 +72,7 @@ export async function createServer() {
   const KEY = Date.now()
 
   // 插入定时检查变化并刷新页面的 JS 代码
-  const refreshScript = createRefreshScript(KEY)
+  const refreshScript = createRefreshScript(KEY, prefix)
   router.get('/check-for-changes', ctx => {
     const callback = String(ctx.query.callback || '__jsxp_cb').replace(/[^\w$.]/g, '')
     const hasChanges = ctx.query.key != KEY
@@ -75,22 +81,28 @@ export async function createServer() {
   })
 
   // 文件请求 API
+  const cwd = process.cwd()
   router.get('/_jsxp_file', async ctx => {
-    const filePath = ctx.query.path // 获取请求中的路径参数
+    const raw = ctx.query.path
+    const filePath = Array.isArray(raw) ? raw[0] : raw
     if (!filePath) {
       ctx.status = 400
       ctx.body = { error: 'Missing "path" query parameter' }
       return
     }
-    const fileURL = decodeURIComponent(filePath) // 解码路径
-    // 检查文件是否存在
+    const fileURL = normalize(decodeURIComponent(filePath))
+    // 限制在工作目录下，防止任意文件读取
+    if (!fileURL.startsWith(cwd)) {
+      ctx.status = 403
+      ctx.body = { error: 'Access denied' }
+      return
+    }
     if (!existsSync(fileURL)) {
       ctx.status = 404
       ctx.body = { error: 'File not found' }
       return
     }
     try {
-      // 发送文件内容
       await send(ctx, fileURL, { root: '/' })
     } catch (error) {
       console.error('Error sending file:', error)

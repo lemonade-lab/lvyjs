@@ -2,26 +2,69 @@ import React from 'react'
 import fs from 'fs'
 import path from 'path'
 
-/**
- * 判断是否是常见的 web 协议（http/https/data/blob/mailto/tel/...）
- */
-function isCommonWebProtocol(url: string) {
-  return /^(https?:|data:|blob:|mailto:|tel:)/i.test(url)
+const MIME: Record<string, string> = {
+  // image
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  ico: 'image/x-icon',
+  avif: 'image/avif',
+  // font
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  // audio/video
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  // data
+  json: 'application/json',
+  webmanifest: 'application/manifest+json',
+  // style/script
+  css: 'text/css',
+  js: 'application/javascript'
+}
+
+function getMime(filePath: string, fallback = 'application/octet-stream') {
+  return MIME[path.extname(filePath).slice(1).toLowerCase()] ?? fallback
 }
 
 /**
- * 只要不是常见协议就尝试本地读取并返回 Buffer，否则返回 null
+ * 判断是否是常见的 web 协议
  */
-function tryReadFileMaybeLocal(url: string): Buffer | null {
-  if (!url || isCommonWebProtocol(url)) return null
+function isWebUrl(url: string) {
+  return /^(https?:|data:|blob:|mailto:|tel:)/i.test(url)
+}
+
+/** 文件缓存，同一渲染周期内避免重复 readFileSync */
+const fileCache = new Map<string, Buffer | null>()
+
+/**
+ * 只要不是 web 协议就尝试本地读取并返回 Buffer，否则返回 null
+ */
+function tryReadLocal(url: string): Buffer | null {
+  if (!url || isWebUrl(url)) return null
   let filePath = url
-  // 兼容 file:// 前缀
   if (url.startsWith('file://')) filePath = url.replace(/^file:\/\//i, '')
-  // 兼容 windows 路径 file:///C:/xxx
   if (/^\/[A-Za-z]:\//.test(filePath)) filePath = filePath.slice(1)
-  if (fs.existsSync(filePath)) return fs.readFileSync(filePath)
-  console.warn(`文件不存在: ${filePath}`)
-  return null
+  if (fileCache.has(filePath)) return fileCache.get(filePath)!
+  const buf = fs.existsSync(filePath) ? fs.readFileSync(filePath) : null
+  if (!buf) console.warn(`文件不存在: ${filePath}`)
+  fileCache.set(filePath, buf)
+  return buf
+}
+
+/** 本地文件转 data URL，非本地返回 null */
+function toDataUrl(src: string, mime?: string): string | null {
+  const buf = tryReadLocal(src)
+  if (!buf) return null
+  return `data:${mime ?? getMime(src)};base64,${buf.toString('base64')}`
 }
 
 // 1. 样式：本地自动内联，否则外链
@@ -29,8 +72,8 @@ export const StyleSheet: React.FC<{ src: string } & React.LinkHTMLAttributes<HTM
   src,
   ...props
 }) => {
-  const content = tryReadFileMaybeLocal(src)
-  if (content) return <style {...props} dangerouslySetInnerHTML={{ __html: content.toString() }} />
+  const buf = tryReadLocal(src)
+  if (buf) return <style dangerouslySetInnerHTML={{ __html: buf.toString() }} />
   return <link rel="stylesheet" href={src} {...props} />
 }
 export const LinkStyleSheet = StyleSheet
@@ -40,14 +83,7 @@ export const Image: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { src: 
   src,
   ...props
 }) => {
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    const ext = path.extname(src).slice(1)
-    const mime = ext === 'jpg' ? 'jpeg' : ext
-    const dataUrl = `data:image/${mime};base64,${content.toString('base64')}`
-    return <img src={dataUrl} {...props} />
-  }
-  return <img src={src} {...props} />
+  return <img src={toDataUrl(src) ?? src} {...props} />
 }
 
 // 3. 背景图片：支持数组，本地自动 base64
@@ -55,19 +91,8 @@ export const BackgroundImage: React.FC<
   React.HTMLAttributes<HTMLDivElement> & { src: string | string[] }
 > = ({ src, style, ...props }) => {
   const srcArr = Array.isArray(src) ? src : [src]
-  const bgImages = srcArr
-    .map(item => {
-      const content = tryReadFileMaybeLocal(item)
-      if (content) {
-        const ext = path.extname(item).slice(1)
-        const mime = ext === 'jpg' ? 'jpeg' : ext
-        return `url('data:image/${mime};base64,${content.toString('base64')}')`
-      }
-      return `url('${item}')`
-    })
-    .filter(Boolean)
-  if (bgImages.length === 0) return null
-  return <div style={{ ...(style || {}), backgroundImage: bgImages.join(', ') }} {...props} />
+  const bgImages = srcArr.map(item => `url('${toDataUrl(item) ?? item}')`)
+  return <div style={{ ...style, backgroundImage: bgImages.join(', ') }} {...props} />
 }
 
 // 4. JS ESM 脚本：本地自动内联，其余外链
@@ -76,11 +101,9 @@ export const ESM: React.FC<React.ScriptHTMLAttributes<HTMLScriptElement> & { src
   children,
   ...rest
 }) => {
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    return (
-      <script type="module" {...rest} dangerouslySetInnerHTML={{ __html: content.toString() }} />
-    )
+  const buf = tryReadLocal(src)
+  if (buf) {
+    return <script type="module" {...rest} dangerouslySetInnerHTML={{ __html: buf.toString() }} />
   }
   return (
     <script type="module" src={src} {...rest}>
@@ -93,26 +116,10 @@ export const ESM: React.FC<React.ScriptHTMLAttributes<HTMLScriptElement> & { src
 export const FontFace: React.FC<{
   fontFamily: string
   src: string
-  style?: React.CSSProperties
-}> = ({ fontFamily, src, style }) => {
-  let fontSrc = src
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    const ext = path.extname(src).slice(1)
-    const mime =
-      ext === 'woff'
-        ? 'font/woff'
-        : ext === 'woff2'
-        ? 'font/woff2'
-        : ext === 'ttf'
-        ? 'font/ttf'
-        : ext === 'otf'
-        ? 'font/otf'
-        : 'application/octet-stream'
-    fontSrc = `data:${mime};base64,${content.toString('base64')}`
-  }
+}> = ({ fontFamily, src }) => {
+  const fontSrc = toDataUrl(src) ?? src
   return (
-    <style style={style}>{`
+    <style>{`
       @font-face {
         font-family: '${fontFamily}';
         src: url('${fontSrc}');
@@ -126,11 +133,8 @@ export const SVG: React.FC<React.ImgHTMLAttributes<HTMLImageElement> & { src: st
   src,
   ...props
 }) => {
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    // 直接内联SVG代码
-    return <span dangerouslySetInnerHTML={{ __html: content.toString() }} {...props} />
-  }
+  const buf = tryReadLocal(src)
+  if (buf) return <span dangerouslySetInnerHTML={{ __html: buf.toString() }} {...props} />
   return <img src={src} {...props} />
 }
 
@@ -141,49 +145,21 @@ export const Media: React.FC<
     tag?: 'audio' | 'video'
   }
 > = ({ src, tag = 'audio', ...props }) => {
-  let realSrc = src
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    const ext = path.extname(src).slice(1)
-    const mime =
-      tag === 'audio'
-        ? `audio/${ext === 'mp3' ? 'mpeg' : ext}`
-        : `video/${ext === 'mp4' ? 'mp4' : ext}`
-    realSrc = `data:${mime};base64,${content.toString('base64')}`
-  }
+  const realSrc = toDataUrl(src) ?? src
   if (tag === 'audio') return <audio src={realSrc} {...props} />
   return <video src={realSrc} {...props} />
 }
 
-// 8. JSON数据：本地自动内联，否则外链
+// 8. JSON数据：本地自动内联，否则忽略
 export const JsonData: React.FC<{ src: string; id?: string }> = ({ src, id }) => {
-  const content = tryReadFileMaybeLocal(src)
-  if (content) {
-    return (
-      <script
-        type="application/json"
-        id={id}
-        dangerouslySetInnerHTML={{ __html: content.toString() }}
-      />
-    )
-  }
-  // 外链JSON不建议直接输出，可用fetch异步获取
-  return null
+  const buf = tryReadLocal(src)
+  if (!buf) return null
+  return (
+    <script type="application/json" id={id} dangerouslySetInnerHTML={{ __html: buf.toString() }} />
+  )
 }
 
 // 9. favicon/manifest等通用资源：本地自动 base64，其余外链
 export const LinkRel: React.FC<{ rel: string; href: string }> = ({ rel, href, ...props }) => {
-  let realHref = href
-  const content = tryReadFileMaybeLocal(href)
-  if (content) {
-    const ext = path.extname(href).slice(1)
-    let mime = ''
-    if (ext === 'ico') mime = 'image/x-icon'
-    else if (ext === 'png') mime = 'image/png'
-    else if (ext === 'json') mime = 'application/json'
-    else if (ext === 'webmanifest') mime = 'application/manifest+json'
-    else mime = 'application/octet-stream'
-    realHref = `data:${mime};base64,${content.toString('base64')}`
-  }
-  return <link rel={rel} href={realHref} {...props} />
+  return <link rel={rel} href={toDataUrl(href) ?? href} {...props} />
 }

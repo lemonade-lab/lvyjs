@@ -4,6 +4,9 @@ import fs from 'fs'
 import path from 'path'
 import { RenderOptions } from '../types.js'
 
+/**
+ * MIME类型映射
+ */
 const MIME_MAP: Record<string, string> = {
   html: 'text/html',
   css: 'text/css',
