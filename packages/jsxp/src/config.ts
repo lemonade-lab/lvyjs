@@ -1,2 +1,2 @@
 import { JSXPOptions } from './types'
-export const defineConfig = (options: JSXPOptions) => options
+export const defineConfig = (options: JSXPOptions): JSXPOptions => options

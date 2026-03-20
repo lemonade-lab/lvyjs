@@ -1,6 +1,30 @@
 import { Browser, type PuppeteerLaunchOptions } from 'puppeteer'
 import puppeteer from 'puppeteer'
+import fs from 'fs'
+import path from 'path'
 import { RenderOptions } from '../types.js'
+
+const MIME_MAP: Record<string, string> = {
+  html: 'text/html',
+  css: 'text/css',
+  js: 'application/javascript',
+  json: 'application/json',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  webp: 'image/webp',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  mp3: 'audio/mpeg',
+  mp4: 'video/mp4',
+  wav: 'audio/wav',
+  webm: 'video/webm',
+  ico: 'image/x-icon'
+}
 
 /**
  * 默认参数配置
@@ -80,7 +104,24 @@ export class Puppeteer {
   #launch: PuppeteerLaunchOptions = { ...PuppeteerDefineOptioins }
 
   // 应用缓存
-  browser: Browser = null
+  browser: Browser | null = null
+
+  /**
+   * 将截图结果转为 Buffer
+   */
+  #toBuffer(buff: Uint8Array | Buffer | string | void, encoding?: BufferEncoding): Buffer | null {
+    if (!buff) return null
+    if (buff instanceof Uint8Array) return Buffer.from(buff)
+    if (Buffer.isBuffer(buff)) return buff
+    if (typeof buff === 'string') {
+      if (buff.startsWith('data:')) {
+        const base64Data = buff.split(',')[1] || ''
+        return Buffer.from(base64Data, 'base64')
+      }
+      return Buffer.from(buff, encoding)
+    }
+    return null
+  }
 
   /**
    * 读取浏览器地址
@@ -163,62 +204,56 @@ export class Puppeteer {
   }
 
   /**
-   *
-   * @param html
-   * @param Options
-   * @returns
+   * 渲染HTML并截图
+   * 使用 setContent + jsxp:// 请求拦截
+   * @param html HTML内容字符串（已经过路径处理）
+   * @param Options 渲染选项
+   * @returns 截图Buffer或null
    */
   async render(html: string, Options?: RenderOptions) {
     const T = await this.isStart()
     if (!T) return null
     const page = await this.browser?.newPage()
     if (!page) return null
-    const { goto, selector, screenshot, isHtmlContent, bufferFromEncoding } = Options ?? {}
-    if (isHtmlContent) {
-      await page.setContent(html, {
-        waitUntil: 'networkidle2',
-        timeout: 12000,
-        ...(goto ?? {})
-      })
-    } else {
-      await page.goto(`file://${html}`, {
-        waitUntil: 'networkidle2',
-        timeout: 12000,
-        ...(goto ?? {})
-      })
-    }
-    const body = await page.$(selector ?? 'body')
-    if (!body) return null
-    console.info('[puppeteer] success')
-    const buff = await body.screenshot({
-      type: 'png',
-      ...(screenshot ?? {})
-    })
-    await page.close()
-    if (!buff) return null
-    if (buff instanceof Uint8Array) {
-      return Buffer.from(buff)
-    } else if (Buffer.isBuffer(buff)) {
-      return buff
-    } else if (typeof buff === 'string') {
-      const curbuff = buff as string
-      // base64
-      if (curbuff.startsWith('data:')) {
-        const base64Data = curbuff.split(',')[1] || ''
-        return Buffer.from(base64Data, 'base64')
-      }
-      return Buffer.from(buff, bufferFromEncoding)
-    }
-    return null
-  }
+    const { goto, selector, screenshot, bufferFromEncoding } = Options ?? {}
 
-  /**
-   *
-   * @param htmlContent
-   * @param Options
-   * @returns
-   */
-  renderHtml(htmlContent: string, Options?: RenderOptions) {
-    return this.render(htmlContent, { ...Options, isHtmlContent: true })
+    // 启用请求拦截，jsxp:// 协议从文件系统响应
+    await page.setRequestInterception(true)
+    page.on('request', req => {
+      const url = req.url()
+      if (url.startsWith('jsxp://')) {
+        let localPath = decodeURIComponent(url.replace(/^jsxp:\/\//, ''))
+        if (/^\/[A-Za-z]:\//.test(localPath)) localPath = localPath.slice(1)
+        if (fs.existsSync(localPath)) {
+          const ext = path.extname(localPath).slice(1).toLowerCase()
+          req.respond({
+            status: 200,
+            contentType: MIME_MAP[ext] || 'application/octet-stream',
+            body: fs.readFileSync(localPath)
+          })
+        } else {
+          console.warn('[puppeteer] local file not found:', localPath)
+          req.respond({ status: 404, body: 'Not found' })
+        }
+        return
+      }
+      req.continue()
+    })
+
+    await page.setContent(html, {
+      waitUntil: 'load',
+      timeout: 60000,
+      ...(goto ?? {})
+    })
+
+    const body = await page.$(selector ?? 'body')
+    if (!body) {
+      await page.close()
+      return null
+    }
+    console.info('[puppeteer] success')
+    const buff = await body.screenshot({ type: 'png', ...(screenshot ?? {}) })
+    await page.close()
+    return this.#toBuffer(buff, bufferFromEncoding)
   }
 }

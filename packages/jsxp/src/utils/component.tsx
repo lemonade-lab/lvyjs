@@ -1,7 +1,43 @@
+import React from 'react'
 import { renderToString } from 'react-dom/server'
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { existsSync } from 'fs'
 import { ComponentCreateOpsionType } from '../types.ts'
+
+/**
+ * HTML路径处理模式
+ */
+export type PathMode = 'local' | 'server'
+
+/**
+ * 处理HTML中的本地文件路径
+ * @param html HTML字符串
+ * @param mode 模式：local 使用 jsxp:// 协议，server 使用 /_jsxp_file?path= 路由
+ * @returns 处理后的HTML
+ */
+export function processHtmlPaths(html: string, mode: PathMode): string {
+  const rewrite = (link: string) => {
+    const filePath = decodeURIComponent(link)
+    if (!existsSync(filePath)) return null
+    if (mode === 'server') {
+      return `/_jsxp_file?path=${encodeURIComponent(link)}`
+    }
+    return `jsxp://${encodeURIComponent(filePath)}`
+  }
+
+  // 处理 src/href 属性中的路径
+  html = html.replace(/(src|href)=(["'])([^"']+)\2/g, (match, attr, quote, link) => {
+    const newPath = rewrite(link)
+    return newPath ? `${attr}=${quote}${newPath}${quote}` : match
+  })
+
+  // 处理 CSS url() 中的路径
+  html = html.replace(/url\(["']?([^"')]+)["']?\)/g, (match, link) => {
+    const newPath = rewrite(link)
+    return newPath ? `url(${newPath})` : match
+  })
+
+  return html
+}
 
 /**
  * ************
@@ -9,71 +45,23 @@ import { ComponentCreateOpsionType } from '../types.ts'
  * **********
  */
 export class Component {
-  //
-  #dir = ''
-  //
-  constructor() {
-    this.#dir = join(process.cwd(), '.data', 'component')
-  }
-
   /**
-   * 编译html
-   * @param options
-   * @returns
+   * 编译组件为HTML字符串
+   * @param options 组件选项
+   * @param mode 路径处理模式
+   * @returns HTML字符串
    */
-  compile(options: ComponentCreateOpsionType) {
-    const DOCTYPE = '<!DOCTYPE html>'
-    const HTML = renderToString(options.component)
-    const html = `${DOCTYPE}${HTML}`
-    /**
-     * create false
-     */
-    if (typeof options?.create == 'boolean' && options?.create == false) {
-      // is server  启动 server 解析
-      if (options.server === true) return this.processHtmlPaths(html)
-      //
-      return html
+  async compile(options: ComponentCreateOpsionType, mode?: PathMode) {
+    let html: string
+    if ('html' in options && options.html) {
+      html = options.html
+    } else if ('element' in options && options.element) {
+      const props = options.propsCall ? await options.propsCall() : {}
+      html = `<!DOCTYPE html>${renderToString(React.createElement(options.element, props))}`
+    } else {
+      html = `<!DOCTYPE html>${renderToString(options.component)}`
     }
-    /**
-     * create true
-     */
-    const dir = join(this.#dir, options?.path ?? '')
-    // mkdir
-    mkdirSync(dir, { recursive: true })
-    // url
-    const address = join(dir, options?.name ?? 'jsxp.html')
-    // write
-    writeFileSync(address, options.server === true ? this.processHtmlPaths(html) : html)
-    // url
-    return address
-  }
-
-  /**
-   * 处理html路径
-   * @param html
-   * @returns
-   */
-  processHtmlPaths = (html: string) => {
-    // 使用正则表达式提取所有 src 和 href 属性中的路径
-    const attrRegex = /(src|href)=["']([^"']+)["']/g
-    html = html.replace(attrRegex, (match, attr, link) => {
-      const url = decodeURIComponent(link)
-      if (existsSync(url)) {
-        const newPath = `/files?path=${encodeURIComponent(link)}`
-        return `${attr}="${newPath}"`
-      }
-      return match
-    })
-    // 使用正则表达式提取 CSS 中 url() 的路径
-    const urlRegex = /url\(["']?([^"')]+)["']?\)/g
-    html = html.replace(urlRegex, (match, link) => {
-      const url = decodeURIComponent(link)
-      if (existsSync(url)) {
-        const newPath = `/files?path=${encodeURIComponent(link)}`
-        return `url(${newPath})`
-      }
-      return match
-    })
+    if (mode) return processHtmlPaths(html, mode)
     return html
   }
 }

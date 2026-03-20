@@ -1,15 +1,14 @@
 import React from 'react'
 import cssURL from '@src/input.css'
-import { LinkStyleSheet } from 'jsxp'
-export default function App() {
+export default function App(props: { name: string }) {
   return (
     <html>
       <head>
-        <LinkStyleSheet src={cssURL} />
+        <link rel="stylesheet" href={cssURL} />
       </head>
       <body>
-        <div className="p-1 bg-black text-white ">hell,asd</div>
-        <div className="bg-blue-600 h-20 w-full"></div>
+        <div className="p-1 bg-black text-white ">hello</div>
+        <div className="bg-blue-600 h-20 w-full">{props.name}</div>
       </body>
     </html>
   )

@@ -4,7 +4,7 @@ import Router from 'koa-router'
 import { join } from 'path'
 import { Component } from '../utils/component.js'
 import { existsSync } from 'fs'
-import { JSXPOptions } from '../types.js'
+import { RouteOption } from '../types.js'
 import send from 'koa-send'
 import { createRefreshScript } from './refreshScript.js'
 
@@ -68,19 +68,14 @@ export async function createServer() {
   // 插入定时检查变化并刷新页面的 JS 代码
   const refreshScript = createRefreshScript(KEY)
   router.get('/check-for-changes', ctx => {
-    if (ctx.request.query?.key == KEY) {
-      ctx.body = {
-        hasChanges: false
-      }
-    } else {
-      ctx.body = {
-        hasChanges: true
-      }
-    }
+    const callback = String(ctx.query.callback || '__jsxp_cb').replace(/[^\w$.]/g, '')
+    const hasChanges = ctx.query.key != KEY
+    ctx.type = 'application/javascript'
+    ctx.body = `${callback}(${JSON.stringify({ hasChanges })})`
   })
 
   // 文件请求 API
-  router.get('/files', async ctx => {
+  router.get('/_jsxp_file', async ctx => {
     const filePath = ctx.query.path // 获取请求中的路径参数
     if (!filePath) {
       ctx.status = 400
@@ -114,16 +109,9 @@ export async function createServer() {
       const routes = config?.routes
       if (!routes) return
       // 选择key
-      const options = routes[url] as JSXPOptions['routes']['']
-      // 丢失了
+      const options = routes[url] as RouteOption
       if (!options) return
-      // options
-      const HTML = Com.compile({
-        component: options.component,
-        create: false,
-        server: true
-      })
-      // 内容
+      const HTML = await Com.compile(options as any, 'server')
       ctx.body = `${HTML}${refreshScript}`
     })
   }

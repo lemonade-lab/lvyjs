@@ -1,6 +1,4 @@
 /**
  * @type {import("puppeteer").Configuration}
  */
-module.exports = {
-  skipDownload: true
-}
+module.exports = require('jsxp/.puppeteerrc')

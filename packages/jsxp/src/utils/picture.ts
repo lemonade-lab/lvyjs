@@ -24,24 +24,23 @@ export class Picture {
   }
 
   /**
-   * 截图组件
+   * 截图组件（本地模式，jsxp:// 拦截）
    * @param options 组件选项
    * @param RenderOptions 渲染选项
-   * @returns 截图Buffer或HTML地址
+   * @returns 截图Buffer或null
    */
   async screenshot(options: ComponentCreateOpsionType, RenderOptions?: RenderOptions) {
-    const Address = this.component.compile(options)
-    if (typeof options.create == 'boolean' && options.create === false) return Address
-    return await this.puppeteer.render(Address, RenderOptions)
+    const html = await this.component.compile(options, 'local')
+    return await this.puppeteer.render(html, RenderOptions)
   }
 
   /**
-   * 纯HTML模式截图
+   * 截图纯HTML（本地模式，jsxp:// 拦截）
    * @param htmlContent HTML内容字符串
    * @param RenderOptions 渲染选项
    * @returns 截图Buffer或null
    */
   async screenshotHtml(htmlContent: string, RenderOptions?: RenderOptions) {
-    return await this.puppeteer.renderHtml(htmlContent, RenderOptions)
+    return await this.puppeteer.render(htmlContent, RenderOptions)
   }
 }

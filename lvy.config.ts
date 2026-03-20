@@ -6,6 +6,7 @@ export default defineConfig({
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
   },
+  watch: ['src/**/*'],
   assets: {
     filter: /\.(png|jpg|jpeg|gif|svg|webp|ico|yaml|txt|ttf)$/
   },
