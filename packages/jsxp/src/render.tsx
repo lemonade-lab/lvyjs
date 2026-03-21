@@ -40,6 +40,7 @@ export const renders: RendersType = Components => {
  * @param Component 组件
  * @param props 组件 props
  * @returns 截图Buffer或null
+ * @deprecated 废弃，请使用 renderComponentIsHtmlToBuffer、renderHtmlToBuffer、renderElement 等更明确的函数替代
  */
 export const renderComponentToBuffer = <P extends Record<string, unknown>>(
   _name: string,
@@ -67,7 +68,7 @@ export const renderComponentIsHtmlToBuffer = <P extends Record<string, unknown>>
 }
 
 /**
- * 纯HTML模式渲染（使用队列）
+ * 纯HTML模式渲染
  * @param htmlContent HTML内容字符串
  * @param PupOptions 渲染选项
  * @returns 截图Buffer或null

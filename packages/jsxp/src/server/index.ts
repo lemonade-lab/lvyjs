@@ -1,24 +1,77 @@
 import Koa from 'koa'
 import KoaStatic from 'koa-static'
 import Router from 'koa-router'
-import { join, normalize } from 'path'
+import { join, normalize, dirname, resolve, extname } from 'path'
 import { Component } from '../utils/component.js'
 import { existsSync } from 'fs'
+import { stat as fsStat, readFile as fsReadFile } from 'fs/promises'
 import { RouteOption } from '../types.js'
 import send from 'koa-send'
 import { createRefreshScript } from './refreshScript.js'
+
+/** 需要扫描内部 url() 引用的文本类型 */
+const SERVER_TEXT_TYPES = new Set(['css', 'html', 'htm', 'svg', 'js', 'mjs'])
+const SERVER_CSS_URL_RE = /url\(["']?([^"')]+)["']?\)/g
+const SERVER_MIME: Record<string, string> = {
+  css: 'text/css',
+  html: 'text/html',
+  htm: 'text/html',
+  svg: 'image/svg+xml',
+  js: 'application/javascript',
+  mjs: 'application/javascript'
+}
+
+/**
+ * 重写文本文件中的 url() 本地路径为 /_jsxp_file?path= 路由
+ */
+function rewriteServerUrls(content: string, fileDir: string, prefix: string): string {
+  return content.replace(SERVER_CSS_URL_RE, (match, ref: string) => {
+    if (/^(https?:|data:|blob:|mailto:|tel:|#)/i.test(ref)) return match
+    // 已经是 /_jsxp_file 路径则跳过
+    if (ref.includes('/_jsxp_file')) return match
+    const absPath = resolve(fileDir, ref)
+    return `url(${prefix}/_jsxp_file?path=${encodeURIComponent(absPath)})`
+  })
+}
 
 /**
  * 动态加载
  * @param URL
  * @returns
  */
-const _dynamicCache = new Map<string, WeakRef<any>>()
+const _dynamicMtime = new Map<string, number>()
+const _dynamicModule = new Map<string, any>()
+const _dynamicStatAt = new Map<string, number>()
+/** fsStat 检查间隔（毫秒），避免每次请求都做 syscall */
+const STAT_TTL = 1000
+/** 模块缓存上限，防止无限增长 */
+const DYNAMIC_CACHE_MAX = 10
 const Dynamic = async (URL: string) => {
-  const modulePath = `file://${URL}?update=${Date.now()}`
+  const now = Date.now()
+  const lastCheck = _dynamicStatAt.get(URL) ?? 0
+  // TTL 内直接返回缓存模块，跳过 fsStat
+  if (now - lastCheck < STAT_TTL && _dynamicModule.has(URL)) {
+    return _dynamicModule.get(URL)
+  }
+  const { mtimeMs } = await fsStat(URL)
+  _dynamicStatAt.set(URL, now)
+  // 文件未变化时复用缓存，避免模块图无限增长
+  if (_dynamicMtime.get(URL) === mtimeMs && _dynamicModule.has(URL)) {
+    return _dynamicModule.get(URL)
+  }
+  const modulePath = `file://${URL}?update=${mtimeMs}`
   const mod = (await import(modulePath))?.default
-  // 只保留最新引用，旧模块随 GC 回收
-  _dynamicCache.set(URL, new WeakRef(mod))
+  // 淘汰最旧条目，防止内存累积
+  if (_dynamicModule.size >= DYNAMIC_CACHE_MAX) {
+    const oldest = _dynamicModule.keys().next().value
+    if (oldest !== undefined) {
+      _dynamicModule.delete(oldest)
+      _dynamicMtime.delete(oldest)
+      _dynamicStatAt.delete(oldest)
+    }
+  }
+  _dynamicMtime.set(URL, mtimeMs)
+  _dynamicModule.set(URL, mod)
   return mod
 }
 
@@ -103,7 +156,16 @@ export async function createServer() {
       return
     }
     try {
-      await send(ctx, fileURL, { root: '/' })
+      const ext = extname(fileURL).slice(1).toLowerCase()
+      // 文本类型文件：扫描 url() 引用并重写为 /_jsxp_file 路由
+      if (SERVER_TEXT_TYPES.has(ext)) {
+        const content = await fsReadFile(fileURL, 'utf-8')
+        const rewritten = rewriteServerUrls(content, dirname(fileURL), prefix)
+        ctx.type = SERVER_MIME[ext] || 'text/plain'
+        ctx.body = rewritten
+      } else {
+        await send(ctx, fileURL, { root: '/' })
+      }
     } catch (error) {
       console.error('Error sending file:', error)
       ctx.status = 500

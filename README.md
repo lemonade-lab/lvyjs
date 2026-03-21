@@ -1,6 +1,6 @@
 # LVY
 
-基于 tsx、esbuild、rollup 构建的，为 Node.js 应用设计的开发与打包工具
+基于 tsx、rollup 构建的，为 Node.js 应用设计的开发与打包工具
 
 | Project | Status                | Description |
 | ------- | --------------------- | ----------- |
@@ -45,12 +45,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   alias: {
     entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
-  },
-  build: {
-    OutputOptions: {
-      intro: `/**  https://lvyjs.dev script start **/`,
-      outro: ` /**  https://lvyjs.dev script end  **/ `
-    }
   }
 })
 ```
@@ -265,7 +259,3 @@ export default {
   content: ['./src/**/*.{js,jsx,ts,tsx}']
 }
 ```
-
-## Community
-
-QQ Group 1012967625

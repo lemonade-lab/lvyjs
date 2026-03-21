@@ -15,8 +15,8 @@ export const queue: QueueTask[] = []
 // 标志
 let isProcessing = false
 
-// 并发控制
-const MAX_CONCURRENT = 3
+// 并发控制（与 Puppeteer Page 池大小对齐）
+const MAX_CONCURRENT = 6
 let currentConcurrent = 0
 
 export const setProcessing = (bool: boolean) => {
@@ -32,35 +32,28 @@ export const canProcessMore = () => currentConcurrent < MAX_CONCURRENT
 let count = 0
 
 /**
- * 处理队列
- * @returns
+ * 排空队列，启动尽可能多的并发任务
  */
-export const renderQueue = async () => {
-  if (queue.length === 0) {
+export const renderQueue = () => {
+  while (queue.length > 0 && canProcessMore()) {
+    const task = queue.shift()!
+    currentConcurrent++
+    isProcessing = true
+    processTask(task)
+  }
+  if (queue.length === 0 && currentConcurrent === 0) {
     isProcessing = false
-    return
   }
+}
 
-  // 检查并发限制
-  if (!canProcessMore()) {
-    console.info('[queue] max concurrent reached, waiting...')
-    return
-  }
-
-  // 设置标志
-  isProcessing = true
-  currentConcurrent++
-
-  // 得到队列中的第一个任务
-  const task = queue.shift()
-  if (!task) return
-
-  const { reject } = task
-
+/**
+ * 处理单个渲染任务
+ */
+const processTask = async (task: QueueTask) => {
   try {
     const pic = await picture()
     if (!pic) {
-      reject(new Error('Failed to initialize picture instance'))
+      task.reject(new Error('Failed to initialize picture instance'))
       return
     }
 
@@ -70,19 +63,16 @@ export const renderQueue = async () => {
   } catch (error) {
     count++
     console.error('[queue] render error:', error)
-    // 拒绝任务
-    reject(error)
-    // 如果错误次数超过1次，重启浏览器
+    task.reject(error)
     if (count > 1) {
       console.info('[queue] restarting browser due to repeated errors')
-      await picture(true) // 重启浏览器
+      await picture(true)
     }
   } finally {
     currentConcurrent--
+    // 无递归，通过事件循环调度下一批任务
+    renderQueue()
   }
-
-  // 处理下一个任务
-  renderQueue()
 }
 
 /**
@@ -91,7 +81,7 @@ export const renderQueue = async () => {
  * @param PupOptions 渲染选项
  * @returns Promise<Buffer | null>
  */
-export const addToQueue = async (
+export const addToQueue = (
   ComOptions: ComponentCreateOpsionType,
   PupOptions?: RenderOptions
 ): Promise<Buffer | null> => {
@@ -102,8 +92,6 @@ export const addToQueue = async (
       resolve,
       reject
     })
-    if (!getProcessing()) {
-      renderQueue()
-    }
+    renderQueue()
   })
 }
