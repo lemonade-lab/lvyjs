@@ -10,7 +10,7 @@
     "build": "npx lvy build"
   },
   "dependencies": {
-    "jsxp": "1.2.2"
+    "jsxp": "1.3"
   },
   "devDependencies": {
     "@types/node": "^22",

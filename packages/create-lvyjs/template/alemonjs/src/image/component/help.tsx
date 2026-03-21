@@ -1,6 +1,6 @@
 import React from 'react'
 import { BackgroundImage } from 'jsxp'
-import img_logo from '@src/asstes/alemonjs.png'
+import img_logo from '@src/assets/alemonjs.png'
 import Html from './Html'
 type Props = {
   data: string

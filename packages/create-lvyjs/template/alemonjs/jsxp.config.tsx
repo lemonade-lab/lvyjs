@@ -1,6 +1,6 @@
 import React from 'react'
 import { defineConfig } from 'jsxp'
-import Word from '@src/image/conponent/help'
+import Word from '@src/image/component/help'
 export default defineConfig({
   routes: {
     '/': {

@@ -11,6 +11,4 @@ const pm2 = config?.pm2 ?? {}
 /**
  * @type {{ apps: import("pm2").StartOptions[] }}
  */
-module.exports = {
-  ...pm2
-}
+module.exports = pm2
