@@ -64,8 +64,5 @@ export type RouterType = {
   options?: ComponentCreateOpsionType
 }[]
 
-export type ObtainProps<T> = T extends React.FC<infer P>
-  ? P
-  : T extends React.ComponentClass<infer P>
-  ? P
-  : never
+export type ObtainProps<T> =
+  T extends React.FC<infer P> ? P : T extends React.ComponentClass<infer P> ? P : never

@@ -62,11 +62,8 @@ export type JSXPOptions = {
   routes?: Record<string, RouteOption>
 }
 
-export type ObtainProps<T> = T extends React.FC<infer P>
-  ? P
-  : T extends React.ComponentClass<infer P>
-  ? P
-  : never
+export type ObtainProps<T> =
+  T extends React.FC<infer P> ? P : T extends React.ComponentClass<infer P> ? P : never
 
 export type RendersType = <
   ComponentsType extends Record<string, React.FC<any> | React.ComponentClass<any>>
