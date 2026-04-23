@@ -15,7 +15,7 @@ export interface ScreenshotFileOptions {
 /**
  *
  */
-export type ComponentCreateOpsionType = {
+export type ComponentCreateOptionsType = {
   /**
    * 扩展路径
    */
@@ -61,7 +61,7 @@ export type ComponentCreateOpsionType = {
  */
 export type RouterType = {
   url: string
-  options?: ComponentCreateOpsionType
+  options?: ComponentCreateOptionsType
 }[]
 
 export type ObtainProps<T> =

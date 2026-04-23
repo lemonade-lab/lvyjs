@@ -1,7 +1,7 @@
 import { PuppeteerLaunchOptions } from 'puppeteer'
 import { Component } from './component'
 import { Puppeteer } from './utils/puppeteer'
-import { ComponentCreateOpsionType, ScreenshotFileOptions } from './types'
+import { ComponentCreateOptionsType, ScreenshotFileOptions } from './types'
 /**
  * 截图类
  */
@@ -28,7 +28,7 @@ export class Picture {
    * @param options
    * @returns
    */
-  async screenshot(options: ComponentCreateOpsionType, PupOptions?: ScreenshotFileOptions) {
+  async screenshot(options: ComponentCreateOptionsType, PupOptions?: ScreenshotFileOptions) {
     const Address = this.Com.compile(options)
     if (typeof options.file_create == 'boolean' && options.file_create === false) return Address
     return this.Pup.render(Address, PupOptions)

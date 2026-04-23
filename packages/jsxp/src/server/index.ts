@@ -1,38 +1,20 @@
 import Koa from 'koa'
 import KoaStatic from 'koa-static'
 import Router from 'koa-router'
-import { join, normalize, dirname, resolve, extname } from 'path'
-import { Component } from '../utils/component.js'
+import { join, normalize, dirname, extname } from 'path'
+import { Component } from '../core/component.js'
 import { existsSync } from 'fs'
 import { stat as fsStat, readFile as fsReadFile } from 'fs/promises'
 import { RouteOption } from '../types.js'
 import send from 'koa-send'
 import { createRefreshScript } from './refreshScript.js'
-
-/** 需要扫描内部 url() 引用的文本类型 */
-const SERVER_TEXT_TYPES = new Set(['css', 'html', 'htm', 'svg', 'js', 'mjs'])
-const SERVER_CSS_URL_RE = /url\(["']?([^"')]+)["']?\)/g
-const SERVER_MIME: Record<string, string> = {
-  css: 'text/css',
-  html: 'text/html',
-  htm: 'text/html',
-  svg: 'image/svg+xml',
-  js: 'application/javascript',
-  mjs: 'application/javascript'
-}
-
-/**
- * 重写文本文件中的 url() 本地路径为 /_jsxp_file?path= 路由
- */
-function rewriteServerUrls(content: string, fileDir: string, prefix: string): string {
-  return content.replace(SERVER_CSS_URL_RE, (match, ref: string) => {
-    if (/^(https?:|data:|blob:|mailto:|tel:|#)/i.test(ref)) return match
-    // 已经是 /_jsxp_file 路径则跳过
-    if (ref.includes('/_jsxp_file')) return match
-    const absPath = resolve(fileDir, ref)
-    return `url(${prefix}/_jsxp_file?path=${encodeURIComponent(absPath)})`
-  })
-}
+import {
+  DYNAMIC_CACHE_MAX,
+  rewriteServerUrls,
+  SERVER_MIME,
+  SERVER_TEXT_TYPES,
+  STAT_TTL
+} from './config.js'
 
 /**
  * 动态加载
@@ -42,10 +24,12 @@ function rewriteServerUrls(content: string, fileDir: string, prefix: string): st
 const _dynamicMtime = new Map<string, number>()
 const _dynamicModule = new Map<string, any>()
 const _dynamicStatAt = new Map<string, number>()
-/** fsStat 检查间隔（毫秒），避免每次请求都做 syscall */
-const STAT_TTL = 1000
-/** 模块缓存上限，防止无限增长 */
-const DYNAMIC_CACHE_MAX = 10
+
+/**
+ *
+ * @param URL
+ * @returns
+ */
 const Dynamic = async (URL: string) => {
   const now = Date.now()
   const lastCheck = _dynamicStatAt.get(URL) ?? 0

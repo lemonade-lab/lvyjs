@@ -4,7 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { basename, join } from 'path'
 import { LinkMain } from './components/link.tsx'
 import { createHash } from 'node:crypto'
-import { ComponentCreateOpsionType } from './types.ts'
+import { ComponentCreateOptionsType } from './types.ts'
 
 //
 const state = '/file'
@@ -51,7 +51,7 @@ export class Component {
    * @param options
    * @returns
    */
-  #rewriteFiles(options: ComponentCreateOpsionType) {
+  #rewriteFiles(options: ComponentCreateOptionsType) {
     /**
      *
      * @param _
@@ -115,7 +115,7 @@ export class Component {
    * @param options
    * @returns
    */
-  compile(options: ComponentCreateOpsionType) {
+  compile(options: ComponentCreateOptionsType) {
     /**
      * html_files
      */

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Picture } from './picture.js'
-import { ComponentCreateOpsionType, ObtainProps, ScreenshotFileOptions } from './types.js'
+import { ComponentCreateOptionsType, ObtainProps, ScreenshotFileOptions } from './types.js'
 class ScreenshotPicture extends Picture {
   constructor() {
     // 继承实例
@@ -20,7 +20,7 @@ export const Render = () => {
 }
 // 队列
 const queue: {
-  ComOptions: ComponentCreateOpsionType
+  ComOptions: ComponentCreateOptionsType
   PupOptions?: ScreenshotFileOptions
   resolve: Function
   reject: Function
@@ -58,7 +58,7 @@ const processQueue = async () => {
  * @param options
  */
 export const render = async (
-  ComOptions: ComponentCreateOpsionType,
+  ComOptions: ComponentCreateOptionsType,
   PupOptions?: ScreenshotFileOptions
 ): Promise<Buffer | false> => {
   // 如果 puppeteer 尚未初始化，则进行初始化

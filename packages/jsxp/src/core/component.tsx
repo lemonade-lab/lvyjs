@@ -1,13 +1,14 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { access } from 'fs/promises'
-import type { ComponentCreateOpsionType } from '../types'
+import type { ComponentCreateOptionsType } from '../types'
 
 /** HTML路径处理模式 */
 export type PathMode = 'local' | 'server'
 
 /** 文件存在性缓存，带 TTL 使 false 结果可过期 */
 const _existsCache = new Map<string, { value: boolean; ts: number }>()
+/** 缓存最大条目数，防止内存泄漏 */
 const EXIST_CACHE_MAX = 500
 /** false 结果的过期时间（毫秒），true 结果不过期 */
 const EXIST_FALSE_TTL = 5000
@@ -101,7 +102,7 @@ export class Component {
    * @param mode 路径处理模式
    * @returns HTML字符串
    */
-  async compile(options: ComponentCreateOpsionType, mode?: PathMode) {
+  async compile(options: ComponentCreateOptionsType, mode?: PathMode) {
     let html: string
     if ('html' in options && options.html) {
       html = options.html

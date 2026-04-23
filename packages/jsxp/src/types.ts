@@ -1,22 +1,71 @@
+import type { BrowserContext, BrowserContextOptions, Page as PlaywrightPage } from 'playwright-core'
 import { GoToOptions, ScreenshotOptions } from 'puppeteer-core'
 import React from 'react'
+
+export type BrowserEngine = 'playwright' | 'puppeteer'
+
+export type PlaywrightRequestResourceType =
+  | 'document'
+  | 'stylesheet'
+  | 'image'
+  | 'media'
+  | 'font'
+  | 'script'
+  | 'texttrack'
+  | 'xhr'
+  | 'fetch'
+  | 'eventsource'
+  | 'websocket'
+  | 'manifest'
+  | 'other'
 
 /**
  * 无头浏览器渲染函数配置参数
  */
 export type RenderOptions = {
+  preferredEngine?: BrowserEngine
   goto?: GoToOptions
   selector?: string
   screenshot?: Readonly<ScreenshotOptions> & {
     encoding: 'base64'
   }
   bufferFromEncoding?: BufferEncoding
+  playwright?: {
+    context?: BrowserContextOptions
+    colorScheme?: 'light' | 'dark' | 'no-preference' | null
+    media?: 'screen' | 'print' | null
+    waitForFonts?: boolean
+    waitForNetworkIdle?: boolean
+    waitForSelectorTimeout?: number
+    waitForStableFrames?: number
+    stableFrameIntervalMs?: number
+    maxContextPoolSize?: number
+    retryOnBrowserError?: boolean
+    network?: {
+      allowUrlPatterns?: string[]
+      blockUrlPatterns?: string[]
+      blockResourceTypes?: PlaywrightRequestResourceType[]
+    }
+    locatorScreenshot?: Record<string, unknown>
+    diagnostics?: {
+      enabled?: boolean
+      includeTrace?: boolean
+      includeScreenshot?: boolean
+      tracePath?: string
+      screenshotPath?: string
+    }
+  }
 }
+
+export type PlaywrightPageHandler<TResult> = (
+  page: PlaywrightPage,
+  context: BrowserContext
+) => TResult | Promise<TResult>
 
 /**
  * 组件编译选项
  */
-export type ComponentCreateOpsionType =
+export type ComponentCreateOptionsType =
   | { component: React.ReactNode; html?: never; element?: never; propsCall?: never }
   | { html: string; component?: never; element?: never; propsCall?: never }
   | ComponentCreateWithElement<any>

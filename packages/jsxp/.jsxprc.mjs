@@ -2,6 +2,5 @@ import config from './.jsxprc.shared.cjs'
 
 /**
  * @type {import("puppeteer-core").Configuration}
- * @deprecated 请改为在 .jsxprc.cjs 或 .jsxprc.mjs 中配置。
  */
 export default config

@@ -1,7 +1,8 @@
 import type { LaunchOptions as PuppeteerLaunchOptions } from 'puppeteer-core'
-import { Component } from './component'
-import { Puppeteer } from './puppeteer'
-import type { ComponentCreateOpsionType, RenderOptions } from '../types'
+import { Component } from '../component'
+import { BrowserManager } from './manager'
+import type { BrowserEngine, ComponentCreateOptionsType, RenderOptions } from '../../types'
+
 /**
  * 截图类
  * 结合了组件和浏览器
@@ -10,17 +11,30 @@ export class Picture {
   /**
    * 浏览器控制
    */
-  puppeteer: typeof Puppeteer.prototype
+  browser: typeof BrowserManager.prototype
   /**
    * 组件控制
    */
   component: typeof Component.prototype
+
   /**
    * 初始化组件和浏览器
    */
-  constructor(launch?: PuppeteerLaunchOptions) {
+  constructor(launch?: PuppeteerLaunchOptions, preferredEngine?: BrowserEngine) {
     this.component = new Component()
-    this.puppeteer = new Puppeteer(launch)
+    this.browser = new BrowserManager(launch, preferredEngine)
+  }
+
+  getPreferredEngine() {
+    return this.browser.getPreferredEngine()
+  }
+
+  getEngine() {
+    return this.browser.getEngine()
+  }
+
+  get puppeteer() {
+    return this.browser
   }
 
   /**
@@ -29,9 +43,9 @@ export class Picture {
    * @param RenderOptions 渲染选项
    * @returns 截图Buffer或null
    */
-  async screenshot(options: ComponentCreateOpsionType, RenderOptions?: RenderOptions) {
+  async screenshot(options: ComponentCreateOptionsType, RenderOptions?: RenderOptions) {
     const html = await this.component.compile(options, 'local')
-    return await this.puppeteer.render(html, RenderOptions)
+    return await this.browser.render(html, RenderOptions)
   }
 
   /**
@@ -41,6 +55,6 @@ export class Picture {
    * @returns 截图Buffer或null
    */
   async screenshotHtml(htmlContent: string, RenderOptions?: RenderOptions) {
-    return await this.puppeteer.render(htmlContent, RenderOptions)
+    return await this.browser.render(htmlContent, RenderOptions)
   }
 }

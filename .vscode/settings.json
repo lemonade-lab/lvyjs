@@ -12,5 +12,5 @@
   "[javascriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["alemonjs", "icqq", "jsxp", "lvyjs", "ningmengchongshui", "yunzaijs"]
+  "cSpell.words": ["alemonjs", "icqq", "jsxp", "jsxprc", "lvyjs", "ningmengchongshui", "yunzaijs"]
 }

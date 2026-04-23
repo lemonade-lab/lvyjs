@@ -7,6 +7,10 @@ node_modules
 !/.puppeteerrc.cjs
 !/.puppeteerrc.mjs
 !/.puppeteerrc.d.ts
+!/.jsxprc.cjs
+!/.jsxprc.mjs
+!/.jsxprc.shared.cjs
+!/.jsxprc.d.ts
 !/env.d.ts
 !/tsconfig.json
 !/bin
