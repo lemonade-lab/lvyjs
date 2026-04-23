@@ -9,7 +9,6 @@
     // jsx
     "jsx": "react",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "noEmit": true,
     // version
     "ignoreDeprecations": "5.0",

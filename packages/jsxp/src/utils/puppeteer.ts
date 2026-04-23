@@ -1,8 +1,331 @@
-import { Browser, Page, type PuppeteerLaunchOptions } from 'puppeteer'
-import puppeteer from 'puppeteer'
-import { promises as fsp } from 'fs'
+import os from 'os'
+import { execSync } from 'child_process'
+import { existsSync, promises as fsp } from 'fs'
+import puppeteer, {
+  Browser,
+  Page,
+  type LaunchOptions as PuppeteerLaunchOptions
+} from 'puppeteer-core'
 import path from 'path'
-import { RenderOptions } from '../types.js'
+import type { RenderOptions } from '../types.js'
+
+/**
+ * 浏览器可执行文件路径的环境变量候选列表，按优先级顺序排列
+ */
+const EXECUTABLE_ENV_KEYS = [
+  'PUPPETEER_EXECUTABLE_PATH',
+  'JSXP_EXECUTABLE_PATH',
+  // 其他常见环境变量，兼容性更好
+  'GOOGLE_CHROME_BIN',
+  'CHROME_BIN',
+  'CHROMIUM_PATH',
+  'CHROMIUM_BIN',
+  'EDGE_PATH'
+] as const
+
+// 推荐优先使用的环境变量列表，供错误提示使用
+const RECOMMENDED_ENV_KEYS = EXECUTABLE_ENV_KEYS.slice(0, 2)
+
+const WINDOWS_PROGRAM_FILES = [
+  process.env.PROGRAMFILES,
+  process.env['PROGRAMFILES(X86)'],
+  process.env.ProgramW6432
+].filter((value): value is string => Boolean(value))
+
+const WINDOWS_LOCAL_APP_DATA = process.env.LOCALAPPDATA
+
+const DARWIN_APPLICATION_ROOTS = ['/Applications', path.join(os.homedir(), 'Applications')]
+
+function uniquePaths(values: readonly string[]) {
+  return [...new Set(values)]
+}
+
+/**
+ * 命令行候选列表，按优先级顺序排列
+ * Unix 系统通过 `command -v` 检测，Windows 通过 `where` 检测
+ */
+const COMMAND_CANDIDATES = [
+  'chromium',
+  'chromium-browser',
+  'chrome',
+  'google-chrome',
+  'google-chrome-stable',
+  'google-chrome-beta',
+  'google-chrome-canary',
+  'microsoft-edge',
+  'microsoft-edge-stable',
+  'microsoft-edge-beta',
+  'microsoft-edge-dev',
+  'msedge',
+  'msedge.exe',
+  'chrome.exe',
+  'brave-browser',
+  'brave-browser-stable',
+  'brave.exe'
+]
+
+/**
+ * 平台特定的浏览器路径候选列表，按优先级顺序排列
+ * 适用于常见操作系统，覆盖了常见的安装路径
+ */
+const PLATFORM_PATH_CANDIDATES: Record<NodeJS.Platform | 'default', string[]> = {
+  aix: [],
+  android: uniquePaths([
+    '/system/bin/chrome',
+    '/system/bin/chromium',
+    '/product/bin/chrome',
+    '/product/bin/chromium',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chrome',
+    '/data/data/com.termux/files/usr/bin/chromium',
+    '/data/data/com.termux/files/usr/bin/chromium-browser',
+    '/data/data/com.termux/files/usr/bin/google-chrome'
+  ]),
+  darwin: uniquePaths(
+    DARWIN_APPLICATION_ROOTS.flatMap(root => [
+      path.join(root, 'Google Chrome.app', 'Contents', 'MacOS', 'Google Chrome'),
+      path.join(root, 'Google Chrome Beta.app', 'Contents', 'MacOS', 'Google Chrome Beta'),
+      path.join(root, 'Google Chrome Canary.app', 'Contents', 'MacOS', 'Google Chrome Canary'),
+      path.join(root, 'Chromium.app', 'Contents', 'MacOS', 'Chromium'),
+      path.join(root, 'Microsoft Edge.app', 'Contents', 'MacOS', 'Microsoft Edge'),
+      path.join(root, 'Microsoft Edge Beta.app', 'Contents', 'MacOS', 'Microsoft Edge Beta'),
+      path.join(root, 'Microsoft Edge Dev.app', 'Contents', 'MacOS', 'Microsoft Edge Dev'),
+      path.join(root, 'Microsoft Edge Canary.app', 'Contents', 'MacOS', 'Microsoft Edge Canary'),
+      path.join(root, 'Brave Browser.app', 'Contents', 'MacOS', 'Brave Browser')
+    ])
+  ),
+  freebsd: ['/usr/local/bin/chromium', '/usr/local/bin/chrome'],
+  haiku: [],
+  linux: uniquePaths([
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chrome',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome-beta',
+    '/usr/bin/google-chrome-canary',
+    '/usr/bin/microsoft-edge',
+    '/usr/bin/microsoft-edge-stable',
+    '/usr/bin/microsoft-edge-beta',
+    '/usr/bin/microsoft-edge-dev',
+    '/usr/bin/brave-browser',
+    '/usr/bin/brave-browser-stable',
+    '/usr/local/bin/chromium',
+    '/usr/local/bin/chromium-browser',
+    '/usr/local/bin/google-chrome',
+    '/usr/local/bin/google-chrome-stable',
+    '/usr/local/bin/microsoft-edge',
+    '/usr/local/bin/brave-browser',
+    '/opt/google/chrome/chrome',
+    '/opt/google/chrome-beta/chrome',
+    '/opt/google/chrome-unstable/chrome',
+    '/opt/microsoft/msedge/msedge',
+    '/opt/microsoft/msedge-beta/msedge',
+    '/opt/microsoft/msedge-dev/msedge',
+    '/opt/brave.com/brave/brave-browser',
+    '/snap/bin/chromium',
+    '/snap/bin/chromium-browser',
+    '/snap/bin/google-chrome',
+    '/snap/bin/microsoft-edge',
+    '/snap/bin/brave'
+  ]),
+  openbsd: ['/usr/local/bin/chromium', '/usr/local/bin/chrome'],
+  sunos: [],
+  win32: uniquePaths([
+    ...WINDOWS_PROGRAM_FILES.flatMap(root => [
+      path.win32.join(root, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      path.win32.join(root, 'Google', 'Chrome Beta', 'Application', 'chrome.exe'),
+      path.win32.join(root, 'Google', 'Chrome SxS', 'Application', 'chrome.exe'),
+      path.win32.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+      path.win32.join(root, 'Microsoft', 'Edge Beta', 'Application', 'msedge.exe'),
+      path.win32.join(root, 'Microsoft', 'Edge Dev', 'Application', 'msedge.exe'),
+      path.win32.join(root, 'Microsoft', 'Edge SxS', 'Application', 'msedge.exe'),
+      path.win32.join(root, 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe')
+    ]),
+    ...(WINDOWS_LOCAL_APP_DATA
+      ? [
+          path.win32.join(WINDOWS_LOCAL_APP_DATA, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'Google',
+            'Chrome Beta',
+            'Application',
+            'chrome.exe'
+          ),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'Google',
+            'Chrome SxS',
+            'Application',
+            'chrome.exe'
+          ),
+          path.win32.join(WINDOWS_LOCAL_APP_DATA, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'Microsoft',
+            'Edge Beta',
+            'Application',
+            'msedge.exe'
+          ),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'Microsoft',
+            'Edge Dev',
+            'Application',
+            'msedge.exe'
+          ),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'Microsoft',
+            'Edge SxS',
+            'Application',
+            'msedge.exe'
+          ),
+          path.win32.join(
+            WINDOWS_LOCAL_APP_DATA,
+            'BraveSoftware',
+            'Brave-Browser',
+            'Application',
+            'brave.exe'
+          )
+        ]
+      : [])
+  ]),
+  cygwin: [],
+  netbsd: [],
+  default: uniquePaths([
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chrome',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/microsoft-edge',
+    '/usr/bin/brave-browser',
+    '/opt/google/chrome/chrome',
+    '/opt/microsoft/msedge/msedge',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
+  ])
+}
+
+/**
+ * 解析浏览器可执行文件路径的优先级顺序：
+ * 1. 使用 launch.executablePath 指定的路径
+ * 2. 使用环境变量指定的路径
+ * 3. 使用命令行检测到的路径（适用于 Windows、Linux、Android 和 macOS）
+ * 4. 使用平台特定的默认路径
+ * @param value
+ * @returns
+ */
+function isExistingExecutablePath(value?: string | null): value is string {
+  return Boolean(value && existsSync(value))
+}
+
+/**
+ * 从环境变量中获取浏览器可执行文件路径
+ * @returns
+ */
+function getEnvExecutablePath(): string | null {
+  for (const key of EXECUTABLE_ENV_KEYS) {
+    const value = process.env[key]?.trim()
+    if (isExistingExecutablePath(value)) {
+      return value
+    }
+  }
+  return null
+}
+
+/**
+ * 通过命令行检测浏览器可执行文件路径，适用于 Windows、Linux、Android 和 macOS 平台
+ * @returns
+ */
+function getCommandExecutablePath(): string | null {
+  if (!['win32', 'linux', 'android', 'darwin'].includes(process.platform)) {
+    return null
+  }
+
+  for (const item of COMMAND_CANDIDATES) {
+    try {
+      const lookupCommand = process.platform === 'win32' ? `where ${item}` : `command -v ${item}`
+      const commandOutput = execSync(lookupCommand, {
+        stdio: ['ignore', 'pipe', 'ignore']
+      })
+        .toString()
+        .trim()
+
+      const executablePath = commandOutput
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .find(isExistingExecutablePath)
+
+      if (isExistingExecutablePath(executablePath)) {
+        return executablePath
+      }
+    } catch {}
+  }
+
+  return null
+}
+
+/**
+ * 从平台特定的默认路径中获取浏览器可执行文件路径
+ * @returns
+ */
+function getCandidateExecutablePath(): string | null {
+  const candidates = [
+    ...(PLATFORM_PATH_CANDIDATES[process.platform] ?? []),
+    ...PLATFORM_PATH_CANDIDATES.default
+  ]
+
+  for (const item of candidates) {
+    if (isExistingExecutablePath(item)) {
+      return item
+    }
+  }
+
+  return null
+}
+
+/**
+ * 解析浏览器可执行文件路径，按照优先级顺序检查 launch.executablePath、环境变量、命令行和平台特定路径
+ * @param launch
+ * @returns
+ */
+function resolveExecutablePath(launch?: PuppeteerLaunchOptions): string | null {
+  if (isExistingExecutablePath(launch?.executablePath)) {
+    return launch.executablePath
+  }
+
+  return getEnvExecutablePath() ?? getCommandExecutablePath() ?? getCandidateExecutablePath()
+}
+
+/**
+ *  获取缺失浏览器的错误提示，包含针对不同平台的安装建议和环境变量配置说明
+ * @returns
+ */
+function getMissingBrowserError() {
+  const arch = os.arch()
+  const envKeys = RECOMMENDED_ENV_KEYS.join(', ')
+  const archHint =
+    arch === 'arm64' ? '当前架构为 arm64，请确认本机已安装可用的 Chrome、Chromium 或 Edge。' : ''
+
+  return new Error(
+    [
+      '[puppeteer-core] 未找到可用的浏览器可执行文件。',
+      '请先安装 Google Chrome、Chromium 或 Microsoft Edge，然后优先使用以下方式配置路径：',
+      `1. 设置环境变量：${envKeys}`,
+      '2. 在项目中配置 .puppeteerrc.cjs 或 .puppeteerrc.mjs，提供 executablePath',
+      '3. jsxp 仍会继续尝试内置探测逻辑，自动查找本机已安装的浏览器路径',
+      '不推荐在业务代码里通过 new Picture(...) 或 new Puppeteer(...) 传入 executablePath 作为通用配置方式。',
+      archHint
+    ]
+      .filter(Boolean)
+      .join('\n')
+  )
+}
 
 /**
  * MIME类型映射
@@ -53,7 +376,7 @@ function rewriteLocalUrls(content: string, fileDir: string): string {
 /**
  * 默认参数配置
  */
-export const PuppeteerDefineOptioins = {
+export const PuppeteerDefineOptioins: PuppeteerLaunchOptions = {
   // 禁用超时
   timeout: 0, //otocolTimeout: 0,
   // 请求头
@@ -162,8 +485,8 @@ export class Puppeteer {
   constructor(launch?: PuppeteerLaunchOptions) {
     if (launch) {
       this.#launch = {
-        ...launch,
-        ...this.#launch
+        ...this.#launch,
+        ...launch
       }
     }
   }
@@ -173,7 +496,10 @@ export class Puppeteer {
    * @param val
    */
   setLaunch(val: PuppeteerLaunchOptions) {
-    this.#launch = val
+    this.#launch = {
+      ...this.#launch,
+      ...val
+    }
     return this
   }
 
@@ -191,13 +517,23 @@ export class Puppeteer {
    */
   async start() {
     try {
-      this.browser = await puppeteer.launch(this.#launch)
+      const executablePath = resolveExecutablePath(this.#launch)
+      const launchOptions = {
+        ...this.#launch,
+        ...(executablePath ? { executablePath } : {})
+      }
+
+      if (!launchOptions.executablePath && !launchOptions.channel) {
+        throw getMissingBrowserError()
+      }
+
+      this.browser = await puppeteer.launch(launchOptions)
       this.#isBrowser = true
-      // console.info('[puppeteer] open success')
+      // console.info('[puppeteer-core] open success')
       return true
     } catch (err) {
       this.#isBrowser = false
-      console.error('[puppeteer] err', err)
+      console.error(err)
       return false
     }
   }
@@ -265,7 +601,7 @@ export class Puppeteer {
               body
             })
           } catch {
-            console.warn('[puppeteer] local file not found:', localPath)
+            console.warn('[puppeteer-core] local file not found:', localPath)
             this.#fileReadCache.delete(localPath)
             await req.respond({ status: 404, body: 'Not found' })
           }
@@ -315,7 +651,7 @@ export class Puppeteer {
       const body = await page.$(selector ?? 'body')
       if (!body) return null
 
-      console.info('[puppeteer] success')
+      console.info('[puppeteer-core] success')
       const buff = await body.screenshot({ type: 'png', ...(screenshot ?? {}) })
       return this.#toBuffer(buff, bufferFromEncoding)
     } catch (err) {

@@ -4,7 +4,7 @@
  * @param prefix 可选的前缀，用于指定检查更新的路径
  * @returns 返回一个包含刷新逻辑的脚本字符串
  */
-export const createRefreshScript = (key: number, prefix = '') => {
+export const createRefreshScript = (key: number | string, prefix = '') => {
   return `
       <script>
         (function() {

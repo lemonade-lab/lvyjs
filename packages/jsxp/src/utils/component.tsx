@@ -1,11 +1,9 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { access } from 'fs/promises'
-import { ComponentCreateOpsionType } from '../types.ts'
+import type { ComponentCreateOpsionType } from '../types'
 
-/**
- * HTML路径处理模式
- */
+/** HTML路径处理模式 */
 export type PathMode = 'local' | 'server'
 
 /** 文件存在性缓存，带 TTL 使 false 结果可过期 */

@@ -1,4 +1,4 @@
-import { GoToOptions, ScreenshotOptions } from 'puppeteer'
+import { GoToOptions, ScreenshotOptions } from 'puppeteer-core'
 import React from 'react'
 
 /**

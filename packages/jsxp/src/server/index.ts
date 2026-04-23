@@ -122,13 +122,14 @@ export async function createServer() {
   if (!routes) return
 
   // 当前时间戳
-  const KEY = Date.now()
+  const KEY = Date.now().toString()
 
   // 插入定时检查变化并刷新页面的 JS 代码
   const refreshScript = createRefreshScript(KEY, prefix)
   router.get('/check-for-changes', ctx => {
     const callback = String(ctx.query.callback || '__jsxp_cb').replace(/[^\w$.]/g, '')
-    const hasChanges = ctx.query.key != KEY
+    const key = Array.isArray(ctx.query.key) ? ctx.query.key[0] : ctx.query.key
+    const hasChanges = key != KEY
     ctx.type = 'application/javascript'
     ctx.body = `${callback}(${JSON.stringify({ hasChanges })})`
   })

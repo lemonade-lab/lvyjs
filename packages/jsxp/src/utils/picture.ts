@@ -1,7 +1,7 @@
-import { PuppeteerLaunchOptions } from 'puppeteer'
+import type { LaunchOptions as PuppeteerLaunchOptions } from 'puppeteer-core'
 import { Component } from './component'
 import { Puppeteer } from './puppeteer'
-import { ComponentCreateOpsionType, RenderOptions } from '../types'
+import type { ComponentCreateOpsionType, RenderOptions } from '../types'
 /**
  * 截图类
  * 结合了组件和浏览器
