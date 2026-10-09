@@ -102,14 +102,17 @@ export const rewriteAliasImports = (
   const rewrite = (spec: string) =>
     rewriteAliasSpecifier(spec, filePath, inputDir, outputDir, aliasEntries)
   return code
-    .replace(/(from\s*['"])([^'"]+)(['"])/g, (m, pre, spec, post) => pre + rewrite(spec) + post)
+    .replace(
+      /(from\s*['"])([^'"]+)(['"])/g,
+      (_match, pre, spec, post) => pre + rewrite(spec) + post
+    )
     .replace(
       /(import\s*\(\s*['"])([^'"]+)(['"]\s*\))/g,
-      (m, pre, spec, post) => pre + rewrite(spec) + post
+      (_match, pre, spec, post) => pre + rewrite(spec) + post
     )
     .replace(
       /(^|[;\s}])(import\s+['"])([^'"]+)(['"])/gm,
-      (m, lead, pre, spec, post) => lead + pre + rewrite(spec) + post
+      (_match, lead, pre, spec, post) => lead + pre + rewrite(spec) + post
     )
 }
 

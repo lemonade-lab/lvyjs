@@ -1,7 +1,9 @@
 import { convertPath } from '../config'
-import { lvyAssets, lvyStylesCSSImport, lvyExternal } from './plugins/index'
+import { lvyAssets, lvyExternal } from './plugins/index'
 import { globalLogger, type Logger } from 'tsdown'
 import { generateDtsLoose } from './dts'
+import { getPluginContainer } from '../store'
+import { buildPluginAdapter, javascriptPlugin } from './plugin-adapter'
 
 const LogLevels = { silent: 0, error: 1, warn: 2, info: 3 } as const
 
@@ -92,15 +94,12 @@ export async function buildWithTsdown() {
   // 宽松 d.ts：由 lvyjs 自己生成，诊断只作警告，构建不因 d.ts 失败
   const looseDts = buildCfg['dts'] === true || buildCfg['dts'] === 'loose'
 
-  // 共享插件（assets/styles）
+  // 共享插件（assets）
   // 注意：别名不能走插件解析 —— unbundle 模式下产物中的
   // import 不会被改写为相对路径，必须使用 tsdown 内置 alias（resolve.alias）
   const plugins: any[] = []
   if (typeof global.lvyConfig?.assets !== 'boolean') {
     plugins.push(lvyAssets(global.lvyConfig?.assets ?? {}))
-  }
-  if (typeof global.lvyConfig?.styles !== 'boolean') {
-    plugins.push(lvyStylesCSSImport(global.lvyConfig?.styles ?? {}))
   }
 
   let tsdown: typeof import('tsdown')
@@ -125,10 +124,20 @@ export async function buildWithTsdown() {
     }
   }
 
-  // 用户自定义插件与内置共享插件合并，避免覆盖导致样式/资源处理失效
+  // 用户自定义插件与内置共享插件合并，避免覆盖导致资源处理失效
   const userPlugins = Array.isArray(tsdownCfg.plugins) ? tsdownCfg.plugins : []
-  const finalPlugins = [...plugins, ...userPlugins]
-  // Node.js 库默认不打包依赖：把未被别名/资源/样式插件处理的裸包导入外部化。
+  const container = getPluginContainer()
+  const lvyPlugins = container?.plugins ?? []
+  const adapt = plugin => buildPluginAdapter(container!, plugin)
+  const finalPlugins = [
+    ...(container ? javascriptPlugin(container) : []),
+    ...lvyPlugins.filter(plugin => plugin.enforce === 'pre').map(adapt),
+    ...plugins,
+    ...lvyPlugins.filter(plugin => !plugin.enforce).map(adapt),
+    ...userPlugins,
+    ...lvyPlugins.filter(plugin => plugin.enforce === 'post').map(adapt)
+  ]
+  // Node.js 库默认不打包依赖：把未被别名/资源插件处理的裸包导入外部化。
   // 使用 build.bundleDeps: true 关闭（例如前端类应用需要把依赖打进去）。
   if (buildCfg['bundleDeps'] !== true) {
     const aliasFinds: string[] = []

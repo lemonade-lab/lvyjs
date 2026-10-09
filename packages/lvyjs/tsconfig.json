@@ -20,6 +20,7 @@
     "noImplicitAny": false,
     "useDefineForClassFields": true,
     "isolatedModules": true,
+    "types": ["node"],
     "forceConsistentCasingInFileNames": true,
     /* Linting */
     "strict": true,

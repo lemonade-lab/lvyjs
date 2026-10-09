@@ -47,9 +47,7 @@ export type ComponentCreateOptionsType = {
   /**
    * 设置别名
    */
-  file_paths?: {
-    [key: string]: string
-  }
+  file_paths?: Record<string, string | undefined>
   /**
    * server 模式
    */

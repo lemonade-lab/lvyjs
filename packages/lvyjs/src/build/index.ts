@@ -1,4 +1,4 @@
-import { getOptions } from '../store'
+import { getOptions, getPluginContainer } from '../store'
 import { buildWithTsdown } from './tsdown'
 
 export * from './plugins/index'
@@ -9,6 +9,10 @@ export { buildWithTsdown } from './tsdown'
  */
 export async function buildAndRun() {
   const buildCfg = getOptions()?.build
-  if (typeof buildCfg === 'boolean') return
-  await buildWithTsdown()
+  try {
+    if (typeof buildCfg === 'boolean') return
+    await buildWithTsdown()
+  } finally {
+    await getPluginContainer()?.close()
+  }
 }

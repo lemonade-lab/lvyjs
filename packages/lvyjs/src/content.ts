@@ -1,9 +1,4 @@
-import crypto from 'node:crypto'
 import { convertPath } from './config'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
 /**
  * 生成模块内容
  * @param {string} relativePath 相对路径
@@ -16,36 +11,4 @@ export const generateModuleContent = (relativePath: string) => {
     'export default fileUrl;'
   ].join('\n')
   return contents
-}
-
-const getRandomName = (str: string) => {
-  // 使用 MD5 算法创建哈希对象
-  const hash = crypto.createHash('md5')
-  // 更新哈希对象内容
-  hash.update(str)
-  return hash.digest('hex')
-}
-
-const cache = {}
-
-/**
- *
- * @param fileUrl
- * @returns
- */
-export const generateCSSModuleContent = (relativePath: string) => {
-  const inputURL = decodeURIComponent(relativePath)
-  const fileName = getRandomName(inputURL)
-  const outputURL = convertPath(join(__dirname, 'assets', `${fileName}.css`))
-  if (!cache[inputURL]) {
-    global.lvyWorkerProt.postMessage({
-      type: 'CSS_MODULE_GENERATED',
-      payload: {
-        from: inputURL,
-        to: outputURL
-      }
-    })
-    cache[inputURL] = true
-  }
-  return `export default "${outputURL}";`
 }

@@ -1,0 +1,60 @@
+{
+  "name": "lvyjs-plugin-tailwindcss",
+  "version": "0.1.0",
+  "description": "Tailwind CSS 4 integration for LVY development and builds",
+  "type": "module",
+  "license": "MIT",
+  "author": "lemonade",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./env": {
+      "types": "./env.d.ts"
+    }
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE",
+    "env.d.ts"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "peerDependencies": {
+    "lvyjs": ">=0.3.0-alpha.6 <1",
+    "tailwindcss": "^4.3.3"
+  },
+  "dependencies": {
+    "@tailwindcss/node": "^4.3.3",
+    "@tailwindcss/oxide": "^4.3.3",
+    "chokidar": "^5.0.0",
+    "picomatch": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/picomatch": "^4.0.2",
+    "lvyjs": "0.3.0-alpha.6",
+    "tailwindcss": "^4.3.3",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemonade-lab/lvyjs.git",
+    "directory": "packages/lvyjs-plugin-tailwindcss"
+  }
+}

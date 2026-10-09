@@ -29,6 +29,8 @@ const dev = () => {
   let latestConfig = null // 最新待应用的配置
   let fileWatcher = null // chokidar watcher 实例
   let watchDebounce = null // watch 防抖定时器
+  let pluginConnection
+  let pluginWatchFiles = []
 
   // 解析 watch 配置
   const parseWatchConfig = data => {
@@ -47,16 +49,19 @@ const dev = () => {
       clearTimeout(watchDebounce)
       watchDebounce = null
     }
-    if (fileWatcher) {
-      await fileWatcher.close()
-      fileWatcher = null
-    }
+    const watcher = fileWatcher
+    fileWatcher = null
+    await watcher?.close()
   }
 
   // 启动 watch 监听（支持 glob 模式，如 'src/**/*.{ts,tsx}'）
   const startFileWatcher = data => {
-    closeFileWatcher()
-    const { paths, delay } = parseWatchConfig(data)
+    const oldWatcher = fileWatcher
+    fileWatcher = null
+    if (watchDebounce) clearTimeout(watchDebounce)
+    oldWatcher?.close()
+    const { paths: configuredPaths, delay } = parseWatchConfig(data)
+    const paths = [...configuredPaths, ...pluginWatchFiles]
     if (paths.length === 0) return
 
     fileWatcher = chokidar.watch(paths, {
@@ -80,7 +85,7 @@ const dev = () => {
   // 启动开发进程
   const startDevProcess = data => {
     // 如果正在等待重启，先不启动
-    if (pendingRestart) return
+    if (pendingRestart || shuttingDown) return
     const envConfig = data?.env || {}
     // 前面1个被占用，剩余参数
     const restArgs = args.slice(1)
@@ -104,6 +109,7 @@ const dev = () => {
       env: {
         ...process.env,
         ...envConfig,
+        __LVYJS_PLUGIN_CONNECTION: pluginConnection ? JSON.stringify(pluginConnection) : '',
         __LVYJS_REGISTER_CONFIG: JSON.stringify(data) // 传递配置给子进程
       },
       shell: process.platform === 'win32'
@@ -120,7 +126,7 @@ const dev = () => {
       devProcess = null
 
       // 如果是异常退出，可以尝试重启
-      if (code !== 0 && !pendingRestart) {
+      if (code !== 0 && !pendingRestart && !shuttingDown) {
         console.info('[lvyjs] 开发进程异常退出，等待配置重新加载...')
       }
     })
@@ -175,7 +181,7 @@ const dev = () => {
     // 超时保护：如果 5 秒后还没退出，强制杀掉
     killTimeout = setTimeout(() => {
       killTimeout = null
-      if (devProcess && !devProcess.killed) {
+      if (devProcess) {
         console.info('[lvyjs] 开发进程无响应，强制终止')
         devProcess.kill('SIGKILL')
       }
@@ -191,37 +197,62 @@ const dev = () => {
   })
 
   readConfigFork.on('message', msg => {
-    if (msg.error) {
+    if (msg.type === 'pluginWatch') {
+      if (!pluginWatchFiles.includes(msg.path)) pluginWatchFiles.push(msg.path)
+      if (fileWatcher) fileWatcher.add(msg.path)
+      else if (devProcess && latestConfig) startFileWatcher(latestConfig)
+      return
+    }
+    if (msg.type === 'pluginRestart') {
+      if (latestConfig) restartDevProcess(latestConfig)
+      return
+    }
+    if (msg.type === 'error' || msg.error) {
       console.error('[lvyjs] 配置进程错误:', msg.error)
-      process.exit(1)
+      shutdown(1)
     }
 
     if (msg.type === 'configReady') {
+      pluginConnection = msg.payload.connection
+      pluginWatchFiles = msg.payload.watchFiles || []
       restartDevProcess(msg.payload.data)
     }
   })
 
   readConfigFork.on('error', error => {
     console.error('[lvyjs] 读取配置文件时发生错误:', error)
-    process.exit(1)
+    shutdown(1)
   })
 
   // 配置进程意外退出
   readConfigFork.on('exit', code => {
-    if (code !== 0) {
+    if (!shuttingDown) {
+      if (devProcess) devProcess.kill()
       console.error(`[lvyjs] 配置进程意外退出 (${code})`)
       process.exit(1)
     }
   })
 
-  // 处理主进程退出
-  process.on('SIGINT', () => {
+  // Allow plugin cleanup to finish before terminating the host.
+  let shuttingDown = false
+  const shutdown = (code = 0) => {
+    if (shuttingDown) return
+    shuttingDown = true
+    clearTimeout(restartDebounceTimer)
+    clearTimeout(killTimeout)
     console.log('\n[lvyjs] 正在退出...')
     closeFileWatcher()
     if (devProcess) devProcess.kill()
-    if (readConfigFork) readConfigFork.kill()
-    process.exit(0)
-  })
+    if (readConfigFork.connected) readConfigFork.send({ type: 'pluginClose' })
+    else process.exit(code)
+    readConfigFork.once('exit', () => process.exit(code))
+    setTimeout(() => {
+      readConfigFork.kill('SIGKILL')
+      process.exit(code)
+    }, 5000).unref()
+  }
+  process.on('SIGINT', () => shutdown())
+  process.on('SIGTERM', () => shutdown())
 }
 
 const build = () => {
@@ -233,10 +264,13 @@ const build = () => {
     env: Object.assign({}, process.env, {}),
     shell: process.platform === 'win32'
   })
-  if (msg.error) {
-    console.error(msg.error)
-    process.exit()
-  }
+  msg.on('error', error => {
+    console.error(error)
+    process.exitCode = 1
+  })
+  msg.on('exit', code => {
+    process.exitCode = code ?? 1
+  })
 }
 
 if (mode === 'build') {

@@ -1,0 +1,79 @@
+{
+  "name": "lvyjs-plugin-postcss",
+  "version": "0.1.0",
+  "description": "PostCSS and optional Sass/Less integration for LVY",
+  "type": "module",
+  "license": "MIT",
+  "author": "lemonade",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./env": {
+      "types": "./env.d.ts"
+    }
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE",
+    "env.d.ts"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "peerDependencies": {
+    "lvyjs": ">=0.3.0-alpha.6 <1",
+    "sass": "^1.0.0",
+    "less": "^4.0.0"
+  },
+  "dependencies": {
+    "postcss": "^8.4.47",
+    "postcss-import": "^16.1.0",
+    "postcss-url": "^10.1.3",
+    "autoprefixer": "^10.4.20",
+    "postcss-load-config": "^6.0.1",
+    "chokidar": "^5.0.0",
+    "picomatch": "^4.0.3",
+    "tsx": "^4.23.12"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/picomatch": "^4.0.2",
+    "lvyjs": "0.3.0-alpha.6",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "@types/postcss-import": "^14.0.3",
+    "@types/postcss-url": "^10.0.4",
+    "@types/less": "^3.0.8",
+    "sass": "^1.99.0",
+    "less": "^4.6.4",
+    "@tailwindcss/postcss": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemonade-lab/lvyjs.git",
+    "directory": "packages/lvyjs-plugin-postcss"
+  },
+  "peerDependenciesMeta": {
+    "sass": {
+      "optional": true
+    },
+    "less": {
+      "optional": true
+    }
+  }
+}

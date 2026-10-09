@@ -1,5 +1,4 @@
 export const assetsRegExp = /\.(png|jpg|jpeg|gif|svg|webp|ico)$/
-export const stylesRegExp = /\.(css|scss|less|sass)$/
 
 /**
  * 支持的配置文件名列表（按优先级排序）
@@ -18,7 +17,7 @@ export const configFiles = [
  */
 export const createAlias = val => {
   const alias = {}
-  if (!Array.isArray(val.entries)) {
+  if (!Array.isArray(val?.entries)) {
     return alias
   }
   // 遍历 entries 数组

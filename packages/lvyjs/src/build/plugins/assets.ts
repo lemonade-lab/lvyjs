@@ -41,11 +41,7 @@ export const lvyAssets = (options?: LvyAssetsOptions): TsdownPlugin => {
         name: basename(original),
         source: readFileSync(original)
       })
-      return [
-        `const reg = ['win32'].includes(process.platform) ? /^file:\\/\\/\\// : /^file:\\/\\// ;`,
-        `const fileUrl = import.meta.ROLLUP_FILE_URL_${referenceId}.replace(reg, '');`,
-        'export default fileUrl;'
-      ].join('\n')
+      return `import { fileURLToPath } from 'node:url'; export default fileURLToPath(import.meta.ROLLUP_FILE_URL_${referenceId});`
     }
   }
 }

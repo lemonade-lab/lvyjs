@@ -102,17 +102,9 @@ export default defineConfig({
 })
 ```
 
-### styles
+### 样式插件
 
-自定义样式文件识别规则（默认识别 `.css|.scss|.less|.sass`）：
-
-```ts
-export default defineConfig({
-  styles: {
-    filter: /\.(css|scss|less|sass)$/
-  }
-})
-```
+样式处理已迁入独立插件。旧的 `styles` 配置改为 `plugins: [postcss({ include: ... })]`，详见下方迁移说明。
 
 ### watch
 
@@ -156,7 +148,7 @@ export default defineConfig({
 - 默认**不**打包依赖：产物保留 `import ... from 'pkg'`，交由运行时解析；需要把依赖打进产物（如前端类应用）时设置 `build.bundleDeps: true`
 - 默认**不**生成 `.d.ts` 声明文件，需要时设置 `build.dts: true`（宽松模式：能生成的生成，诊断只作警告，无法生成的文件跳过并汇总提示，构建不失败；需要 tsdown 原生严格模式时用 `build.tsdown.dts`）
 - CJS/JSON 由 Rolldown 内置处理，无需额外插件
-- 样式/静态资源使用 lvyjs 自研插件，与开发模式共用同一套编译管线
+- 静态资源由 LVY 内置插件处理；样式由独立插件处理，插件在开发与构建中共享
 - 别名由 tsdown 内置 `alias` 处理，产物中的导入会改写为相对路径
 - `build.OutputOptions` 兼容旧配置：`input` / `dir` / `intro` / `outro` / `sourcemap`
 
@@ -177,92 +169,97 @@ const data = readFileSync(img_logo)
 import img_logo from '@src/assets/img/logo.png'
 ```
 
-## 样式文件
+## 样式插件与迁移
 
-导入样式文件时，返回编译后 CSS 文件的绝对路径：
+LVY 核心不处理 CSS、Sass 或 Less，也不读取 PostCSS 配置。使用独立插件：
 
 ```ts
-import { readFileSync } from 'fs'
-// 得到编译后 CSS 文件的绝对路径
-import cssURL from '@src/assets/style.css'
-// 完整的单文件 CSS 数据（内部引用已合并）
-const data = readFileSync(cssURL, 'utf-8')
-```
+import { defineConfig } from 'lvyjs'
+import postcss from 'lvyjs-plugin-postcss'
 
-内置支持 CSS 处理。如需 LESS、SASS/SCSS 支持：
+export default defineConfig({ plugins: [postcss()] })
+```
 
 ```sh
-yarn add less sass -D
+npm install -D lvyjs-plugin-postcss
+# 使用 Sass/Less 时按需安装
+npm install -D sass less
 ```
 
-### 样式文件中的引用
+原有 CSS 导入约定保持：导入值是编译完成的 CSS 文件绝对路径。`postcss.config.*` 配置由 PostCSS 插件读取。旧 `styles.filter` 移到 `postcss({ include: ... })`，原 `styles: false` 改为不启用样式插件。
 
-**CSS**
+Tailwind CSS 4 专用项目使用 `lvyjs-plugin-tailwindcss`。两个独立插件不自动串行处理同一入口；共存时用 `include` 区分入口。同一入口需要 Tailwind 加其他 PostCSS 步骤时，在 PostCSS 配置中使用 `@tailwindcss/postcss`。
 
-```css
-@import url('@src/assets/test2.css');
-@import url('./test2.css');
-/* 支持别名 */
+样式类型声明也迁入插件，在项目 `env.d.ts` 中添加：
+
+```ts
+/// <reference types="lvyjs-plugin-postcss/env" />
+// Tailwind 专用项目使用 lvyjs-plugin-tailwindcss/env
 ```
 
-**SCSS**
+完整用法：[PostCSS 插件](../lvyjs-plugin-postcss/README.md)、[Tailwind 插件](../lvyjs-plugin-tailwindcss/README.md)。
 
-```scss
-@import url('@src/assets/test3.scss');
-@import url('./test3.scss');
-@import './test3.scss';
-@use './test3.scss';
-@use '@src/assets/test3.scss'; // 别名导入，编译阶段直接支持
-```
+## LVY 插件
 
-**LESS**
+顶层 `plugins` 同时支持开发和构建。插件可以直接写在配置里，也可以从 npm 包导入；支持异步插件、嵌套数组和 `false` 条件禁用。
 
-```less
-@import './test1.css';
-```
+```ts
+import { defineConfig, definePlugin } from 'lvyjs'
+import { readFile } from 'node:fs/promises'
 
-预处理器文件之间的导入同样会被正确编译：`@import url('./test3.scss')` 这类写法会先经 Sass/Less 编译再内联，不会把原始源码混进产物；别名导入在编译阶段直接支持（SCSS：`@import '@src/xxx.scss'` / `@use '@src/xxx.scss'`，LESS：`@import '@src/xxx.less'`）。
-
-## PostCSS
-
-通过 `postcss.config.cjs` 配置 PostCSS 插件。配置了 `alias` 时自动启用 `postcss-import`（解析 `@import` 的别名与相对路径）与 `postcss-url`（改写 `url()` 中的别名），并始终内置 `autoprefixer`。
-
-### 压缩
-
-```sh
-yarn add cssnano -D
-```
-
-```cjs
-// postcss.config.cjs
-module.exports = {
-  plugins: {
-    cssnano: {
-      preset: 'default'
+const dataPlugin = definePlugin({
+  name: 'project-data',
+  resolveId(source) {
+    if (source === 'virtual:version') return '\0virtual:version'
+  },
+  async load(id) {
+    if (id === '\0virtual:version') {
+      return 'export default "1.0.0"'
     }
+    if (!id.endsWith('.data')) return null
+    this.addWatchFile(id)
+    const data = JSON.parse(await readFile(id, 'utf8'))
+    return { code: `export default ${JSON.stringify(data)}`, map: null }
   }
+})
+
+export default defineConfig({ plugins: [dataPlugin] })
+```
+
+应用中可以导入 `virtual:version` 和 `./example.data`。自定义扩展名和虚拟模块的 TypeScript 类型声明由插件或项目提供。
+
+| 接口                          | 行为                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `name`                        | 必填；用于错误定位                                   |
+| `enforce`                     | `pre` / 默认 / `post`                                |
+| `apply`                       | `dev` / `build`；省略时两者都启用                    |
+| `config(config, env)`         | 返回配置补丁；对象递归合并，数组替换，不接受新增插件 |
+| `configResolved(config, env)` | 获取最终配置                                         |
+| `resolveId(source, importer)` | 返回 ID、`{ id, external? }` 或 `null`               |
+| `load(id)`                    | 返回 JavaScript 字符串、`{ code, map? }` 或 `null`   |
+| `transform(code, id)`         | 接收转译后的 JavaScript；返回转换结果或 `null`       |
+| `configureDev(context)`       | 仅开发时调用，可返回异步清理函数                     |
+| `closeBundle()`               | 构建结束、配置重载或开发宿主关闭时清理资源           |
+
+`env` 包含 `command: 'dev' | 'build'` 和 `cwd`。插件列表先展开、按命令过滤，再按执行顺序排列。`resolveId` 和 `load` 采用首个非空结果；`transform` 串行传递代码。用户 `pre` 插件先于内置资源/样式处理，默认和 `post` 插件在其后。
+
+模块钩子的 `this` 提供 `command`、`cwd`、`addWatchFile(path)`、`warn(message)`、`error(message)` 和 `emitAsset({ name, source })`。`addWatchFile` 在开发时登记应用重启依赖，在构建时交给构建引擎。`source` 支持字符串和 `Uint8Array`。
+
+`emitAsset` 返回导出资源绝对路径的 **JavaScript 模块代码**，可以直接作为 `load` 的返回值：
+
+```ts
+load(id) {
+  if (id !== '\0virtual:settings-file') return null
+  return this.emitAsset({ name: 'settings.json', source: '{"enabled":true}' })
 }
 ```
 
-### Tailwind CSS
+开发资源写入项目 `.lvy/assets` 缓存，构建资源写入输出目录。样式插件编译完成并写入文件后才返回路径；插件注册的依赖变化会重启应用。
 
-```sh
-yarn add tailwindcss -D
-```
+`configureDev` 的上下文提供 `cwd`、`addWatchFile(path)` 和 `restart()`。宿主在配置重载时先执行上一轮清理函数，再建立新的插件实例。钩子运行在独立宿主中，与应用没有共享全局变量；内联插件函数和闭包不会经过 JSON 序列化。
 
-```cjs
-// postcss.config.cjs
-module.exports = {
-  plugins: {
-    tailwindcss: {}
-  }
-}
-```
+开发与构建都支持虚拟模块；建议公开 ID 使用 `virtual:`，内部 ID 使用 `\0` 前缀。真实文件请返回绝对路径。`transform` 默认跳过开发运行时的 JSON、CommonJS 和 `node_modules` 模块；构建仍保留引擎的原生模块处理。返回转换映射时，映射应对应传入代码；无映射的转换会丢弃已有映射，避免错误定位误导。
 
-```js
-// tailwind.config.js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./src/**/*.{js,jsx,ts,tsx}']
-}
-```
+底层构建插件仍通过 `build.tsdown.plugins` 配置。这套接口支持本文列出的 LVY 钩子，不承诺完整兼容 Vite 插件、浏览器 HMR 或 Rollup 的全部上下文方法。
+
+插件验证：先运行 `npm run build`，再运行 `npm test`。

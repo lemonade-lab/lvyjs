@@ -1,8 +1,8 @@
 import { Alias } from './typing'
+import type { PluginOption, PluginContainer, PluginCommand } from './plugin'
 export type Options = {
-  env?: {
-    [key: string]: string
-  }
+  plugins?: PluginOption[]
+  env?: Record<string, string | undefined>
   /**
    * 别名
    */
@@ -18,17 +18,6 @@ export type Options = {
    * 静态资源识别
    */
   assets?:
-    | {
-        /**
-         * 过滤得到指定格式的文件识别之为静态资源
-         */
-        filter?: RegExp
-      }
-    | false
-  /**
-   * styles文件解析器
-   */
-  styles?:
     | {
         /**
          * 过滤得到指定格式的文件识别之为静态资源
@@ -117,7 +106,8 @@ export type Options = {
 /**
  *
  */
-export declare const initConfig: () => Promise<void>
+export declare const initConfig: (command?: PluginCommand) => Promise<void>
+export declare const getPluginContainer: () => PluginContainer | undefined
 /**
  * @returns
  */

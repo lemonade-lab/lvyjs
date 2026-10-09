@@ -1,11 +1,19 @@
 import { existsSync } from 'fs'
 import { join } from 'path'
 import { Alias } from './typing'
+import { configFiles } from './config'
+import {
+  createPluginContainer,
+  type PluginCommand,
+  type PluginOption,
+  type PluginContainer
+} from './plugin'
+import { pathToFileURL } from 'node:url'
 
 export type Options = {
-  env?: {
-    [key: string]: string
-  }
+  /** Shared development and build plugins. */
+  plugins?: PluginOption[]
+  env?: Record<string, string | undefined>
   /**
    * 别名
    */
@@ -21,17 +29,6 @@ export type Options = {
    * 静态资源识别
    */
   assets?:
-    | {
-        /**
-         * 过滤得到指定格式的文件识别之为静态资源
-         */
-        filter?: RegExp
-      }
-    | false
-  /**
-   * styles文件解析器
-   */
-  styles?:
     | {
         /**
          * 过滤得到指定格式的文件识别之为静态资源
@@ -121,34 +118,24 @@ export type Options = {
 /**
  *
  */
-export const initConfig = async () => {
-  if (!global.lvyConfig) global.lvyConfig = {}
-  const configFiles = [
-    'lvy.config.ts',
-    'lvy.config.js',
-    'lvy.config.mjs',
-    'lvy.config.cjs',
-    'lvy.config.tsx'
-  ]
-  let configDir = ''
-  for (const file of configFiles) {
-    if (existsSync(file)) {
-      configDir = file
-      break
+let pluginContainer: PluginContainer | undefined
+export const getPluginContainer = () => pluginContainer
+
+export const initConfig = async (command: PluginCommand = 'build') => {
+  const file = configFiles.find(file => existsSync(file))
+  const raw = file
+    ? ((await import(pathToFileURL(join(process.cwd(), file)).href)).default ?? {})
+    : {}
+  const resolved = await createPluginContainer(raw, { command, cwd: process.cwd() })
+  global.lvyConfig = resolved.config
+  pluginContainer = resolved.container
+  if (global.lvyConfig.env) {
+    for (const [key, value] of Object.entries(global.lvyConfig.env)) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = String(value)
     }
   }
-  if (configDir !== '') {
-    const v = await import(`file://${join(process.cwd(), configDir)}`)
-    if (v?.default) {
-      global.lvyConfig = v.default
-      if (global.lvyConfig?.env) {
-        for (const key in global.lvyConfig.env) {
-          process.env[key] = String(global.lvyConfig.env[key])
-        }
-      }
-      process.env.NODE_ENV = process.env?.NODE_ENV || 'development'
-    }
-  }
+  process.env.NODE_ENV ||= 'development'
 }
 
 /**
