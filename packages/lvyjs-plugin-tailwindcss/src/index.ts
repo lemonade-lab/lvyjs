@@ -7,6 +7,7 @@ import { basename, dirname, isAbsolute, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { LvyPlugin, Options, PluginEnvironment } from 'lvyjs'
 import { SourceWatcher, within } from './watch'
+import { assetName, rewriteUrls } from './urls'
 
 export interface TailwindcssOptions {
   /** Directory for automatic class detection. Defaults to the LVY project root. */
@@ -144,11 +145,24 @@ export default function tailwindcss(options: TailwindcssOptions = {}): LvyPlugin
       const scanner = new Scanner({ sources })
       const candidates = compiler.features & Features.Utilities ? scanner.scan() : []
       for (const path of scanner.files) files.add(resolve(path))
+      let css = compiler.build(candidates)
+      let map = options.sourcemap ? toSourceMap(compiler.buildSourceMap()).raw : undefined
+      const rewritten = await rewriteUrls(
+        css,
+        entry,
+        this,
+        applyAlias,
+        async path => {
+          files.add(path)
+          if (this.command === 'dev') await watcher?.watchFiles(entry, [path])
+        },
+        map
+      )
+      css = rewritten.css
+      map = rewritten.map
       dependenciesByEntry.set(entry, files)
       if (this.command === 'build') for (const file of files) this.addWatchFile(file)
       else await watcher?.update(entry, { files, globs: scanner.globs })
-      let css = compiler.build(candidates)
-      let map = options.sourcemap ? toSourceMap(compiler.buildSourceMap()).raw : undefined
       const optimization = options.optimize ?? this.command === 'build'
       if (optimization) {
         const result = optimize(css, {
@@ -160,7 +174,7 @@ export default function tailwindcss(options: TailwindcssOptions = {}): LvyPlugin
         map = result.map
       }
       if (map) css += '\n' + toSourceMap(map).comment(toSourceMap(map).inline)
-      return this.emitAsset({ name: basename(entry), source: css })
+      return this.emitAsset({ name: basename(entry), source: css, fileName: assetName(entry, css) })
     },
     closeBundle: close
   }

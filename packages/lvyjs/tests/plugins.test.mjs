@@ -102,7 +102,7 @@ const plugin = definePlugin({
     if (source === 'virtual:asset') return '\\0virtual:asset'
   },
   load(id) {
-    if (id === '\\0virtual:asset') return this.emitAsset({ name: 'plugin.txt', source: 'plugin-asset' })
+    if (id === '\\0virtual:asset') return this.emitAsset({ name: 'plugin.txt', source: 'plugin-asset', fileName: 'assets/nested/plugin.txt' })
     if (id === '\\0virtual:fixture') return { code: 'import chokidar from \"chokidar\"; if (typeof chokidar.watch !== \"function\") throw new Error(\"virtual dependency failed\"); export default ' + JSON.stringify(privateValue), map: { version: 3, sources: ['virtual-source.js'], names: [], mappings: 'AAAA' } }
     if (!id.endsWith('.custom')) return null
     this.addWatchFile(id)
@@ -184,6 +184,33 @@ test('plugin failures identify the hook and plugin', async () => {
     { command: 'dev', cwd: process.cwd() }
   )
   await assert.rejects(container.load('file.custom'), /broken.*load.*bad input/)
+})
+
+test('explicit asset filenames write nested resources and reject paths outside the output', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'lvy-asset-'))
+  try {
+    const plugin = { name: 'assets' }
+    const { container } = await createPluginContainer(
+      { plugins: [plugin] },
+      { cwd, command: 'dev' }
+    )
+    const context = container.context(plugin)
+    const code = await context.emitAsset({
+      name: 'data.bin',
+      fileName: 'assets/nested/data.bin',
+      source: new Uint8Array([1, 2, 3])
+    })
+    assert.ok(code.includes(join(cwd, '.lvy/assets/nested/data.bin')))
+    assert.deepEqual([...(await readFile(join(cwd, '.lvy/assets/nested/data.bin')))], [1, 2, 3])
+    for (const fileName of ['../data.bin', '/data.bin', 'assets/../data.bin', 'assets\\data.bin'])
+      await assert.rejects(
+        context.emitAsset({ name: 'data.bin', fileName, source: '' }),
+        /Invalid asset filename/
+      )
+    await container.close()
+  } finally {
+    await rm(cwd, { recursive: true, force: true })
+  }
 })
 
 test(

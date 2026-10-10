@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import postcss from 'lvyjs-plugin-postcss'
 import tailwindcss from 'lvyjs-plugin-tailwindcss'
-const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [
     // PostCSS plugin for LvyJS
@@ -15,7 +14,7 @@ export default defineConfig({
     tailwindcss()
   ],
   alias: {
-    entries: [{ find: '@src', replacement: join(__dirname, 'src') }]
+    entries: [{ find: '@src', replacement: join(dirname(fileURLToPath(import.meta.url)), 'src') }]
   },
   watch: ['src/**/*'],
   assets: {

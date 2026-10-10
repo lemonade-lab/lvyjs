@@ -1,7 +1,7 @@
 import { transpileJavascript } from '../javascript'
 import type { TsdownPlugin } from 'tsdown'
 import type { PluginContext } from '../plugin'
-import { codeResult, type LvyPlugin, type PluginContainer } from '../plugin'
+import { codeResult, validateAssetFileName, type LvyPlugin, type PluginContainer } from '../plugin'
 
 /** Transpile before LVY transforms so both environments expose JavaScript. */
 export function javascriptPlugin(container: PluginContainer): TsdownPlugin[] {
@@ -20,8 +20,13 @@ export function javascriptPlugin(container: PluginContainer): TsdownPlugin[] {
 export function buildPluginAdapter(container: PluginContainer, plugin: LvyPlugin): TsdownPlugin {
   const context = (native: any): Partial<PluginContext> => ({
     addWatchFile: path => native.addWatchFile(path),
-    emitAsset: ({ name, source }) => {
-      const reference = native.emitFile({ type: 'asset', name, source })
+    emitAsset: ({ name, source, fileName }) => {
+      const reference = native.emitFile({
+        type: 'asset',
+        name,
+        source,
+        ...(fileName ? { fileName: validateAssetFileName(fileName) } : {})
+      })
       return `import { fileURLToPath } from 'node:url'; export default fileURLToPath(import.meta.ROLLUP_FILE_URL_${reference});`
     }
   })

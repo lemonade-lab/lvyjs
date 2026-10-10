@@ -78,7 +78,7 @@ export async function load(url, context, nextLoad) {
   else if (
     url.startsWith('file:') &&
     global.lvyConfig.assets &&
-    global.lvyConfig.assets.filter?.test(id)
+    (global.lvyConfig.assets.filter?.test(id) || global.lvyConfig.assets.include?.test(id))
   ) {
     result = { format: 'module', source: generateModuleContent(id), shortCircuit: true }
   } else result = await nextLoad(url, context)

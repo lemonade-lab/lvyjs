@@ -12,7 +12,7 @@ import {
   readdir
 } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, resolve, basename } from 'node:path'
+import { join, resolve, basename, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn } from 'node:child_process'
 import tailwindcss from '../lib/index.js'
@@ -105,6 +105,130 @@ async function stop(app) {
     await app.done
   }
 }
+
+async function urlFixture() {
+  const cwd = await fixture()
+  await mkdir(join(cwd, 'src/nested'))
+  await writeFile(join(cwd, 'src/picture (1).png'), 'picture-v1')
+  await writeFile(join(cwd, 'src/nested/font.woff2'), 'font-data')
+  await writeFile(
+    join(cwd, 'src/nested/style.css'),
+    `
+@font-face { font-family: fixture; src: url('./font.woff2?#iefix'); }
+.imported { background: url('@src/picture (1).png'); }
+`
+  )
+  await writeFile(
+    join(cwd, 'src/style.css'),
+    `
+@import 'tailwindcss';
+@import './nested/style.css';
+.alias { background-image: url(@src/picture%20%281%29.png?v=1#image); }
+.relative { background: url('./picture (1).png'); }
+.external { background: url(https://example.com/image.png); }
+.public { background: url(/public/image.png); }
+.data { background: url('data:image/png;base64,YWJj'); }
+.fragment { filter: url(#filter); }
+`
+  )
+  return cwd
+}
+
+async function assertResources(css, cssPath) {
+  const urls = [...css.matchAll(/url\(["']?(\.\/[^"')]+)["']?\)/g)]
+  assert.ok(urls.length >= 4, css)
+  const contents = []
+  for (const [, url] of urls) {
+    const resource = resolve(dirname(cssPath), decodeURIComponent(url.split(/[?#]/)[0]))
+    contents.push(await readFile(resource, 'utf8'))
+  }
+  assert.ok(contents.includes('font-data'))
+  assert.ok(!css.includes('@src/'))
+  assert.match(css, /\?v=1#image/)
+  assert.match(css, /\?#iefix/)
+  assert.match(css, /https:\/\/example.com\/image.png/)
+  assert.match(css, /\/public\/image.png/)
+  assert.match(css, /data:image\/png;base64,YWJj/)
+  assert.match(css, /url\(["']?#filter/)
+  return contents
+}
+
+test(
+  'CSS URL assets resolve aliases/imported paths, preserve suffixes and relocate with the build',
+  { timeout: 120000 },
+  async () => {
+    const cwd = await urlFixture()
+    try {
+      const build = await run([cli, 'build'], cwd).done
+      assert.equal(build.code, 0, build.output)
+      const app = run([join(cwd, 'lib/index.js')], cwd)
+      const css = await app.ready()
+      assert.equal((await app.done).code, 0)
+      const cssPath = app.output.match(/READY:(.+)\n/)[1].trim()
+      assert.ok((await assertResources(css, cssPath)).includes('picture-v1'))
+      const moved = join(cwd, 'moved output')
+      await rename(join(cwd, 'lib'), moved)
+      const relocated = run([join(moved, 'index.js')], cwd)
+      assert.equal(await relocated.ready(), css)
+      assert.equal((await relocated.done).code, 0)
+      await assertResources(css, relocated.output.match(/READY:(.+)\n/)[1].trim())
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  }
+)
+
+test(
+  'dev emits URL resources beside CSS and regenerates them when binary content changes',
+  { timeout: 120000 },
+  async () => {
+    const cwd = await urlFixture()
+    let app
+    try {
+      const config = await readFile(join(cwd, 'lvy.config.ts'), 'utf8')
+      await writeFile(
+        join(cwd, 'lvy.config.ts'),
+        config.replace('plugins:', "env: { KEEP_ALIVE: '1' }, plugins:")
+      )
+      app = run([cli, 'src/index.ts'], cwd)
+      const css = await app.ready()
+      assert.ok(
+        (await assertResources(css, app.output.match(/READY:(.+)\n/)[1].trim())).includes(
+          'picture-v1'
+        )
+      )
+      const offset = app.output.length
+      await writeFile(join(cwd, 'src/picture (1).png'), 'picture-v2')
+      const updated = await app.ready(offset)
+      assert.notEqual(updated, css)
+      const cssPath = app.output
+        .slice(offset)
+        .match(/READY:(.+)\n/)[1]
+        .trim()
+      assert.ok((await assertResources(updated, cssPath)).includes('picture-v2'))
+    } finally {
+      await stop(app)
+      await rm(cwd, { recursive: true, force: true })
+    }
+  }
+)
+
+test(
+  'missing local CSS URL assets fail the build instead of producing broken paths',
+  { timeout: 120000 },
+  async () => {
+    const cwd = await fixture()
+    try {
+      await writeFile(join(cwd, 'src/style.css'), '.image { background: url(@src/missing.png); }')
+      const build = await run([cli, 'build'], cwd).done
+      assert.notEqual(build.code, 0)
+      assert.match(build.output, /lvy:tailwindcss/)
+      assert.match(build.output, /missing.png/)
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  }
+)
 
 test(
   'build uses Tailwind 4, aliases, @theme/@source/@apply and relocatable CSS',
@@ -314,6 +438,42 @@ test(
       assert.match(await app.ready(offset), /\.underline/)
     } finally {
       await stop(app)
+      await rm(cwd, { recursive: true, force: true })
+    }
+  }
+)
+
+test(
+  'alias root import followed by Tailwind expands @apply inside @layer base',
+  { timeout: 120000 },
+  async () => {
+    const cwd = await fixture()
+    try {
+      await mkdir(join(cwd, 'src/assets'))
+      await writeFile(join(cwd, 'src/assets/root.css'), ':root { --root-probe: 1; }')
+      await writeFile(
+        join(cwd, 'src/style.css'),
+        `@import '@src/assets/root.css';
+@import 'tailwindcss';
+@layer base {
+  body {
+    @apply m-0 p-0 flex flex-col;
+  }
+}`
+      )
+      const build = await run([cli, 'build'], cwd).done
+      assert.equal(build.code, 0, build.output)
+      const app = run([join(cwd, 'lib/index.js')], cwd)
+      const css = await app.ready()
+      assert.equal((await app.done).code, 0, app.output)
+      assert.ok(!css.includes('@apply'))
+      assert.ok(!css.includes('@import'))
+      assert.match(css, /--root-probe/)
+      assert.match(css, /display:\s*flex/)
+      assert.match(css, /flex-direction:\s*column/)
+      assert.match(css, /margin:\s*0/)
+      assert.match(css, /padding:\s*0/)
+    } finally {
       await rm(cwd, { recursive: true, force: true })
     }
   }

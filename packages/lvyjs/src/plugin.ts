@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import { basename, join } from 'node:path'
+import { basename, dirname, isAbsolute, join } from 'node:path'
 import remapping from '@jridgewell/remapping'
 import type { Options } from './store'
 
@@ -18,7 +18,21 @@ export type SourceMap = {
   sourceRoot?: string
 }
 export type CodeResult = string | { code: string; map?: SourceMap | string | null }
-export type PluginAsset = { name: string; source: string | Uint8Array }
+export type PluginAsset = {
+  name: string
+  source: string | Uint8Array
+  /** Explicit output-relative filename, useful for resources referenced by another asset. */
+  fileName?: string
+}
+export function validateAssetFileName(fileName: string): string {
+  if (
+    isAbsolute(fileName) ||
+    fileName.includes('\\') ||
+    fileName.split('/').some(part => !part || part === '.' || part === '..')
+  )
+    throw new Error(`Invalid asset filename: ${fileName}`)
+  return fileName
+}
 export type PluginContext = {
   readonly command: PluginCommand
   readonly cwd: string
@@ -123,10 +137,14 @@ export class PluginContainer {
     return {
       ...this.env,
       addWatchFile: this.watchFile,
-      emitAsset: async ({ name, source }) => {
+      emitAsset: async ({ name, source, fileName }) => {
         const hash = createHash('sha256').update(source).digest('hex').slice(0, 16)
-        const path = join(this.env.cwd, '.lvy', 'assets', `${hash}-${basename(name)}`)
-        await mkdir(join(this.env.cwd, '.lvy', 'assets'), { recursive: true })
+        const path = join(
+          this.env.cwd,
+          '.lvy',
+          fileName ? validateAssetFileName(fileName) : `assets/${hash}-${basename(name)}`
+        )
+        await mkdir(dirname(path), { recursive: true })
         await writeFile(path, source)
         return `export default ${JSON.stringify(path)};`
       },

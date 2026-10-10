@@ -243,7 +243,7 @@ export default defineConfig({ plugins: [dataPlugin] })
 
 `env` 包含 `command: 'dev' | 'build'` 和 `cwd`。插件列表先展开、按命令过滤，再按执行顺序排列。`resolveId` 和 `load` 采用首个非空结果；`transform` 串行传递代码。用户 `pre` 插件先于内置资源/样式处理，默认和 `post` 插件在其后。
 
-模块钩子的 `this` 提供 `command`、`cwd`、`addWatchFile(path)`、`warn(message)`、`error(message)` 和 `emitAsset({ name, source })`。`addWatchFile` 在开发时登记应用重启依赖，在构建时交给构建引擎。`source` 支持字符串和 `Uint8Array`。
+模块钩子的 `this` 提供 `command`、`cwd`、`addWatchFile(path)`、`warn(message)`、`error(message)` 和 `emitAsset({ name, source, fileName? })`。`addWatchFile` 在开发时登记应用重启依赖，在构建时交给构建引擎。`source` 支持字符串和 `Uint8Array`。可选的 `fileName` 指定输出目录内的相对文件名（例如 `assets/icon.png`），供资源之间建立引用；开发时对应 `.lvy/assets/icon.png`。路径不能包含 `..` 或使用绝对路径。
 
 `emitAsset` 返回导出资源绝对路径的 **JavaScript 模块代码**，可以直接作为 `load` 的返回值：
 

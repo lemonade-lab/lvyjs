@@ -4,7 +4,7 @@
 
 ## 安装
 
-需要支持插件的 `lvyjs >= 0.3.0-alpha.6`、Tailwind CSS 4.3.3 或更新的 4.x，以及 Node.js 22.18+（22.x）或 24.11+。
+需要支持资源输出文件名的 `lvyjs >= 0.3.0`、Tailwind CSS 4.3.3 或更新的 4.x，以及 Node.js 22.18+（22.x）或 24.11+。
 
 ```sh
 npm install -D lvyjs lvyjs-plugin-tailwindcss tailwindcss@^4.3.3
@@ -95,7 +95,17 @@ plugins: [tailwindcss({ base: './src', exclude: ['coverage'] })]
 
 支持普通 CSS、`@theme`、`@source`、`@apply` 和 Tailwind 官方编译器处理的 CSS 指令。无效指令会使构建失败，错误包含插件名 `lvy:tailwindcss`。
 
-本包处理 CSS，不编译 Sass/Less，也不提供 CSS Modules。`?raw`、`?url` 等导入交给其他插件。CSS 中图片、字体等 `url()` 引用不会由本包复制到构建目录；这些资源应使用可访问的 URL 或由应用另行部署。这里的构建目录可移动保证覆盖生成 CSS 文件本身。
+本包处理 CSS，不编译 Sass/Less，也不提供 CSS Modules。`?raw`、`?url` 等模块导入交给其他插件。
+
+CSS 声明中的本地 `url()` 支持 LVY 别名和相对路径，包括被 `@import` 导入的样式。图片、字体等资源与 CSS 一起输出到 `assets` 目录，文件名包含内容哈希，URL 改为相对路径；移动完整构建目录后仍可访问。开发时输出到 `.lvy/assets`，资源变化会重新编译并重启应用。本地资源不存在时会报错。
+
+```css
+.showImage {
+  background-image: url('@src/assets/alemonjs.png');
+}
+```
+
+URL 的 query/hash 会保留；网络 URL、`data:`、根路径 `/public/...` 和 `#fragment` 保持原样。本包内部使用 PostCSS 解析 CSS URL，但不会加载项目的 `postcss.config.*`，无需启用独立的 LVY PostCSS 插件。`image-set()` 中直接使用的字符串路径暂不处理，请使用 `url()`。
 
 ## 本包开发与验收
 
